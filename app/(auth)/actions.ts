@@ -1,18 +1,10 @@
-'use server';
 
-import { z } from 'zod';
-
-import { createUser, getUser } from '@/lib/db/queries';
-
-import { signIn } from './auth';
-
-const authFormSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
+// Uses real backend for register/login, mocks for everything else.
+import ApiClient, { RegisterPayload, LoginPayload } from '../../backend/backend';
+const api = new ApiClient();
 
 export interface LoginActionState {
-  status: 'idle' | 'in_progress' | 'success' | 'failed' | 'invalid_data';
+  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data" | "user_exists";
 }
 
 export const login = async (
@@ -20,35 +12,26 @@ export const login = async (
   formData: FormData,
 ): Promise<LoginActionState> => {
   try {
-    const validatedData = authFormSchema.parse({
-      email: formData.get('email'),
-      password: formData.get('password'),
-    });
-
-    await signIn('credentials', {
-      email: validatedData.email,
-      password: validatedData.password,
-      redirect: false,
-    });
-
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    if (!email || !password) return { status: 'invalid_data' };
+    await api.login({ email, password } as LoginPayload);
     return { status: 'success' };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { status: 'invalid_data' };
-    }
-
+  } catch (e: any) {
+    if (e?.body?.error === 'user_exists') return { status: 'user_exists' };
+    if (e?.body?.error === 'invalid_data') return { status: 'invalid_data' };
     return { status: 'failed' };
   }
 };
 
 export interface RegisterActionState {
   status:
-    | 'idle'
-    | 'in_progress'
-    | 'success'
-    | 'failed'
-    | 'user_exists'
-    | 'invalid_data';
+    | "idle"
+    | "in_progress"
+    | "success"
+    | "failed"
+    | "user_exists"
+    | "invalid_data";
 }
 
 export const register = async (
@@ -56,29 +39,14 @@ export const register = async (
   formData: FormData,
 ): Promise<RegisterActionState> => {
   try {
-    const validatedData = authFormSchema.parse({
-      email: formData.get('email'),
-      password: formData.get('password'),
-    });
-
-    const [user] = await getUser(validatedData.email);
-
-    if (user) {
-      return { status: 'user_exists' } as RegisterActionState;
-    }
-    await createUser(validatedData.email, validatedData.password);
-    await signIn('credentials', {
-      email: validatedData.email,
-      password: validatedData.password,
-      redirect: false,
-    });
-
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    if (!email || !password) return { status: 'invalid_data' };
+    await api.register({ email, password } as RegisterPayload);
     return { status: 'success' };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { status: 'invalid_data' };
-    }
-
+  } catch (e: any) {
+    if (e?.body?.error === 'user_exists') return { status: 'user_exists' };
+    if (e?.body?.error === 'invalid_data') return { status: 'invalid_data' };
     return { status: 'failed' };
   }
 };

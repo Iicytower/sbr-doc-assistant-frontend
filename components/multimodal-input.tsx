@@ -37,7 +37,7 @@ import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
 import type { VisibilityType } from './visibility-selector';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { chatModels } from '@/lib/ai/models';
-import { saveChatModelAsCookie } from '@/app/(chat)/actions';
+import { saveChatModelAsCookie } from '@/app/dashboard/actions';
 import { startTransition } from 'react';
 
 function PureMultimodalInput({
@@ -52,8 +52,9 @@ function PureMultimodalInput({
   setMessages,
   sendMessage,
   className,
-  selectedVisibilityType,
+
   selectedModelId,
+  disableSuggestedActions = false,
 }: {
   chatId: string;
   input: string;
@@ -66,8 +67,9 @@ function PureMultimodalInput({
   setMessages: UseChatHelpers<ChatMessage>['setMessages'];
   sendMessage: UseChatHelpers<ChatMessage>['sendMessage'];
   className?: string;
-  selectedVisibilityType: VisibilityType;
+
   selectedModelId: string;
+  disableSuggestedActions?: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -244,16 +246,6 @@ function PureMultimodalInput({
         )}
       </AnimatePresence>
 
-      {messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
-          <SuggestedActions
-            sendMessage={sendMessage}
-            chatId={chatId}
-            selectedVisibilityType={selectedVisibilityType}
-          />
-        )}
-
       <input
         type="file"
         className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
@@ -317,7 +309,7 @@ function PureMultimodalInput({
           minHeight={44}
           maxHeight={200}
           disableAutoResize={true}
-          className="text-sm resize-none py-3 px-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-transparent !border-0 !border-none outline-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none placeholder:text-muted-foreground"
+          className="text-sm resize-none p-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-transparent !border-0 !border-none outline-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none placeholder:text-muted-foreground"
           rows={1}
           autoFocus
         />
@@ -349,9 +341,10 @@ export const MultimodalInput = memo(
     if (prevProps.input !== nextProps.input) return false;
     if (prevProps.status !== nextProps.status) return false;
     if (!equal(prevProps.attachments, nextProps.attachments)) return false;
-    if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType)
+
       return false;
     if (prevProps.selectedModelId !== nextProps.selectedModelId) return false;
+    if (prevProps.disableSuggestedActions !== nextProps.disableSuggestedActions) return false;
 
     return true;
   },

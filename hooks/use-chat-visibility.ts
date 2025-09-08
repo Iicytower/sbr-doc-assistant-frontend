@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { unstable_serialize } from 'swr/infinite';
-import { updateChatVisibility } from '@/app/(chat)/actions';
+import { updateChatVisibility } from '@/app/dashboard/actions';
 import {
   getChatHistoryPaginationKey,
   type ChatHistory,
@@ -12,10 +12,8 @@ import type { VisibilityType } from '@/components/visibility-selector';
 
 export function useChatVisibility({
   chatId,
-  initialVisibilityType,
 }: {
   chatId: string;
-  initialVisibilityType: VisibilityType;
 }) {
   const { mutate, cache } = useSWRConfig();
   const history: ChatHistory = cache.get('/api/history')?.data;
@@ -24,7 +22,7 @@ export function useChatVisibility({
     `${chatId}-visibility`,
     null,
     {
-      fallbackData: initialVisibilityType,
+      fallbackData: 'private',
     },
   );
 

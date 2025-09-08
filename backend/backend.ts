@@ -66,21 +66,21 @@ export interface DeleteChatByIdParams {
    ---------------------- */
 
 export default class ApiClient {
-  private baseUrl: string;
+  private baseUrl: string = `http://localhost:3000/api`;
   private token: string | null = null;
   private tokenStorageKey = 'backend_client_token';
 
-  constructor(options?: { baseUrl?: string; loadTokenFromStorage?: boolean }) {
-    this.baseUrl = options?.baseUrl ?? 'http://localhost:3000/api';
-    if (options?.loadTokenFromStorage ?? true) {
-      try {
-        const t = typeof window !== 'undefined' ? window.localStorage.getItem(this.tokenStorageKey) : null;
-        if (t) this.token = t;
-      } catch (e) {
-        // ignore localStorage errors (SSR safety)
-      }
-    }
-  }
+  // constructor(options?: { baseUrl?: string; loadTokenFromStorage?: boolean }) {
+  //   this.baseUrl = options?.baseUrl ?? 'http://localhost:3000/api';
+  //   if (options?.loadTokenFromStorage ?? true) {
+  //     try {
+  //       const t = typeof window !== 'undefined' ? window.localStorage.getItem(this.tokenStorageKey) : null;
+  //       if (t) this.token = t;
+  //     } catch (e) {
+  //       // ignore localStorage errors (SSR safety)
+  //     }
+  //   }
+  // }
 
   /* ----------------------
      Token helpers
@@ -172,10 +172,13 @@ export default class ApiClient {
   // POST /api/auth/register
   async register(payload: RegisterPayload): Promise<any> {
     // Postman pre-request computed nickname from email; replicate if missing
-    const body = { ...payload };
+    const body = { provider: 'local', ...payload };
     if (!body.nickname && payload.email) {
       body.nickname = payload.email.split('@')[0];
     }
+
+    console.log(body);
+
     const res = await this.request('POST', `${this.baseUrl}/auth/register`, { body, skipAuth: true });
     // Postman test saved token => if response includes token, store it automatically
     if (res?.token) this.setToken(res.token);
@@ -250,5 +253,3 @@ export default class ApiClient {
     return this.request('DELETE', `${this.baseUrl}/chat/`, { query: params });
   }
 }
-
-export const backendClient = new ApiClient();

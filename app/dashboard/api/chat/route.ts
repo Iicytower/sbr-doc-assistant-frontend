@@ -1,3 +1,4 @@
+// MOCKED: All backend/database actions are disabled for local/dev use. All data is static/dummy and no real backend/database operations are performed.
 import {
   convertToModelMessages,
   createUIMessageStream,

@@ -66,7 +66,7 @@ function PureArtifact({
   regenerate,
   votes,
   isReadonly,
-  selectedVisibilityType,
+
   selectedModelId,
 }: {
   chatId: string;
@@ -82,7 +82,7 @@ function PureArtifact({
   sendMessage: UseChatHelpers<ChatMessage>['sendMessage'];
   regenerate: UseChatHelpers<ChatMessage>['regenerate'];
   isReadonly: boolean;
-  selectedVisibilityType: VisibilityType;
+
   selectedModelId: string;
 }) {
   const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
@@ -337,7 +337,7 @@ function PureArtifact({
                     sendMessage={sendMessage}
                     className="bg-background dark:bg-muted"
                     setMessages={setMessages}
-                    selectedVisibilityType={selectedVisibilityType}
+
                     selectedModelId={selectedModelId}
                   />
                 </div>
@@ -507,7 +507,7 @@ export const Artifact = memo(PureArtifact, (prevProps, nextProps) => {
   if (!equal(prevProps.votes, nextProps.votes)) return false;
   if (prevProps.input !== nextProps.input) return false;
   if (!equal(prevProps.messages, nextProps.messages.length)) return false;
-  if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType)
+
     return false;
 
   return true;

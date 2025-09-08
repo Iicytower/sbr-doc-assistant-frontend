@@ -14,7 +14,7 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const [session, cookieStore] = await Promise.all([auth(), cookies()]);
-  const isCollapsed = cookieStore.get('sidebar:state')?.value !== 'true';
+  const isCollapsed = cookieStore.get('sidebar:state')?.value === 'false' ? false : false;
 
   return (
     <>
@@ -23,7 +23,7 @@ export default async function Layout({
         strategy="beforeInteractive"
       />
       <DataStreamProvider>
-        <SidebarProvider defaultOpen={!isCollapsed}>
+  <SidebarProvider defaultOpen={true}>
           <AppSidebar user={session?.user} />
           <SidebarInset>{children}</SidebarInset>
         </SidebarProvider>

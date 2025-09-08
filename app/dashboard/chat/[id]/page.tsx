@@ -1,3 +1,4 @@
+// MOCKED: All backend/database actions are disabled for local/dev use. All data is static/dummy and no real backend/database operations are performed.
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 
@@ -49,7 +50,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           id={chat.id}
           initialMessages={uiMessages}
           initialChatModel={DEFAULT_CHAT_MODEL}
-          initialVisibilityType={chat.visibility}
+          initialVisibilityType={chat.visibility as import('@/components/visibility-selector').VisibilityType}
           isReadonly={session?.user?.id !== chat.userId}
           session={session}
           autoResume={true}
@@ -65,7 +66,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
         id={chat.id}
         initialMessages={uiMessages}
         initialChatModel={chatModelFromCookie.value}
-        initialVisibilityType={chat.visibility}
+  initialVisibilityType={chat.visibility as import('@/components/visibility-selector').VisibilityType}
         isReadonly={session?.user?.id !== chat.userId}
         session={session}
         autoResume={true}

@@ -10,7 +10,7 @@ import { fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
 import { Artifact } from './artifact';
 import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';
-import type { VisibilityType } from './visibility-selector';
+// import type { VisibilityType } from './visibility-selector';
 import { useArtifactSelector } from '@/hooks/use-artifact';
 import { unstable_serialize } from 'swr/infinite';
 import { getChatHistoryPaginationKey } from './sidebar-history';
@@ -27,22 +27,23 @@ export function Chat({
   id,
   initialMessages,
   initialChatModel,
-  initialVisibilityType,
+  // initialVisibilityType,
   isReadonly,
   session,
   autoResume,
+  disableSuggestedActions = false,
 }: {
   id: string;
   initialMessages: ChatMessage[];
   initialChatModel: string;
-  initialVisibilityType: VisibilityType;
+  // initialVisibilityType: VisibilityType;
   isReadonly: boolean;
   session: Session;
   autoResume: boolean;
+  disableSuggestedActions?: boolean;
 }) {
   const { visibilityType } = useChatVisibility({
     chatId: id,
-    initialVisibilityType,
   });
 
   const { mutate } = useSWRConfig();
@@ -131,7 +132,6 @@ export function Chat({
       <div className="flex flex-col min-w-0 h-dvh bg-background touch-pan-y overscroll-behavior-contain">
         <ChatHeader
           chatId={id}
-          selectedVisibilityType={initialVisibilityType}
           isReadonly={isReadonly}
           session={session}
         />
@@ -161,8 +161,9 @@ export function Chat({
               messages={messages}
               setMessages={setMessages}
               sendMessage={sendMessage}
-              selectedVisibilityType={visibilityType}
+              // selectedVisibilityType={visibilityType}
               selectedModelId={initialChatModel}
+              disableSuggestedActions={disableSuggestedActions}
             />
           )}
         </div>
@@ -182,7 +183,7 @@ export function Chat({
         regenerate={regenerate}
         votes={votes}
         isReadonly={isReadonly}
-        selectedVisibilityType={visibilityType}
+  // selectedVisibilityType={visibilityType}
         selectedModelId={initialChatModel}
       />
     </>
