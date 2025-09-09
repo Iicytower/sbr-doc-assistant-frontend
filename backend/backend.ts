@@ -70,23 +70,41 @@ export default class ApiClient {
   private token: string | null = null;
   private tokenStorageKey = 'backend_client_token';
 
-  // constructor(options?: { baseUrl?: string; loadTokenFromStorage?: boolean }) {
-  //   this.baseUrl = options?.baseUrl ?? 'http://localhost:3000/api';
-  //   if (options?.loadTokenFromStorage ?? true) {
-  //     try {
-  //       const t = typeof window !== 'undefined' ? window.localStorage.getItem(this.tokenStorageKey) : null;
-  //       if (t) this.token = t;
-  //     } catch (e) {
-  //       // ignore localStorage errors (SSR safety)
-  //     }
-  //   }
-  // }
+  constructor(token?: string) {
+    if (token) {
+      this.token = token;
+      return;
+    }
+    const cookieToken = this.getTokenFromCookie();
+    if (cookieToken) {
+      this.token = cookieToken;
+    }
+  }
+
+  setTokenCookie(token: string) {
+    if (typeof document !== 'undefined') {
+      document.cookie = `backend_token=${encodeURIComponent(token)}; path=/; SameSite=Strict`;
+    }
+  }
+
+  getTokenFromCookie(): string | null {
+    if (typeof document === 'undefined') return null;
+    const match = document.cookie.match(/(?:^|; )backend_token=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
+  clearTokenFromCookie() {
+    if (typeof document !== 'undefined') {
+      document.cookie = 'backend_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
+    }
+  }
 
   /* ----------------------
      Token helpers
      ---------------------- */
   setToken(token: string, persist = true) {
     this.token = token;
+    this.setTokenCookie(token);
     if (persist && typeof window !== 'undefined') {
       try {
         window.localStorage.setItem(this.tokenStorageKey, token);
@@ -94,80 +112,24 @@ export default class ApiClient {
     }
   }
 
+
   clearToken() {
     this.token = null;
+    // Usuwanie tokena z localStorage
     if (typeof window !== 'undefined') {
       try {
         window.localStorage.removeItem(this.tokenStorageKey);
       } catch (e) { /* ignore */ }
     }
+    // Usuwanie tokena z ciasteczka
+    if (typeof document !== 'undefined') {
+      document.cookie = 'backend_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
+    }
   }
 
   getToken(): string | null {
-    return this.token ?? window.localStorage.getItem(this.tokenStorageKey);
+    return this.token ?? this.getTokenFromCookie() ?? window.localStorage.getItem(this.tokenStorageKey);
   }
-
-  /* ----------------------
-     Low-level request helper
-     ---------------------- */
-  private async request(
-    method: string,
-    path: string,
-    options?: {
-      query?: Record<string, any>;
-      body?: any; // either object (json) or FormData
-      headers?: Record<string, string>;
-      skipAuth?: boolean;
-    }
-  ): Promise<any> {
-    // build url + query
-    const url = new URL(path, this.baseUrl.startsWith('http') ? this.baseUrl : (typeof window !== 'undefined' ? window.location.origin + this.baseUrl : this.baseUrl));
-    if (options?.query) {
-      Object.entries(options.query).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) url.searchParams.append(k, String(v));
-      });
-    }
-
-    const headers: Record<string, string> = options?.headers ? { ...options.headers } : {};
-    let body: BodyInit | undefined;
-
-    if (options?.body instanceof FormData) {
-      body = options.body;
-      // don't set content-type; browser will set multipart boundary
-    } else if (options?.body !== undefined) {
-      headers['Content-Type'] = 'application/json';
-      body = JSON.stringify(options.body);
-    }
-
-    if (!options?.skipAuth && this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-
-    const res = await fetch(url.toString(), {
-      method,
-      headers,
-      body,
-      // credentials intentionally not included - keep it stateless; if you need cookies, adapt here
-    });
-
-    const text = await res.text();
-    let data: any = text;
-    try {
-      data = text ? JSON.parse(text) : null;
-    } catch (e) {
-      // keep raw text if not json
-      data = text;
-    }
-
-    if (!res.ok) {
-      throw new ApiError(res.status, data);
-    }
-    return data;
-  }
-
-  /* ----------------------
-     Endpoints (1 method = 1 endpoint)
-     ---------------------- */
 
   // POST /api/auth/register
   async register(payload: RegisterPayload): Promise<any> {
@@ -177,18 +139,22 @@ export default class ApiClient {
       body.nickname = payload.email.split('@')[0];
     }
 
-    console.log(body);
-
     const res = await this.request('POST', `${this.baseUrl}/auth/register`, { body, skipAuth: true });
     // Postman test saved token => if response includes token, store it automatically
-    if (res?.token) this.setToken(res.token);
+    if (res?.token) {
+      this.setToken(res.token);
+      this.setTokenCookie(res.token);
+    }
     return res;
   }
 
   // POST /api/auth/login
   async login(payload: LoginPayload): Promise<any> {
     const res = await this.request('POST', `${this.baseUrl}/auth/login`, { body: payload, skipAuth: true });
-    if (res?.token) this.setToken(res.token);
+    if (res?.token) {
+      this.setToken(res.token);
+      this.setTokenCookie(res.token);
+    }
     return res;
   }
 
@@ -251,5 +217,60 @@ export default class ApiClient {
   // DELETE /api/chat/?chatId=...
   async deleteChatById(params: DeleteChatByIdParams): Promise<any> {
     return this.request('DELETE', `${this.baseUrl}/chat/`, { query: params });
+  }
+
+  private async request(
+    method: string,
+    path: string,
+    options?: {
+      query?: Record<string, any>;
+      body?: any; // either object (json) or FormData
+      headers?: Record<string, string>;
+      skipAuth?: boolean;
+    }
+  ): Promise<any> {
+    // build url + query
+    const url = new URL(path, this.baseUrl.startsWith('http') ? this.baseUrl : (typeof window !== 'undefined' ? window.location.origin + this.baseUrl : this.baseUrl));
+    if (options?.query) {
+      Object.entries(options.query).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) url.searchParams.append(k, String(v));
+      });
+    }
+
+    const headers: Record<string, string> = options?.headers ? { ...options.headers } : {};
+    let body: BodyInit | undefined;
+
+    if (options?.body instanceof FormData) {
+      body = options.body;
+      // don't set content-type; browser will set multipart boundary
+    } else if (options?.body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(options.body);
+    }
+
+    if (!options?.skipAuth && this.getToken()) {
+      headers['Authorization'] = `Bearer ${this.getToken()}`;
+    }
+
+    const res = await fetch(url.toString(), {
+      method,
+      headers,
+      body,
+      // credentials intentionally not included - keep it stateless; if you need cookies, adapt here
+    });
+
+    const text = await res.text();
+    let data: any = text;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch (e) {
+      // keep raw text if not json
+      data = text;
+    }
+
+    if (!res.ok) {
+      throw new ApiError(res.status, data);
+    }
+    return data;
   }
 }

@@ -6,6 +6,7 @@ import { generateUUID } from '@/lib/utils';
 import { DataStreamHandler } from '@/components/data-stream-handler';
 import { auth } from '../(auth)/auth';
 import { redirect } from 'next/navigation';
+import ApiClient from '@/backend/backend';
 
 export default async function Page() {
   const session = await auth();
@@ -17,6 +18,10 @@ export default async function Page() {
   const id = generateUUID();
 
   const cookieStore = await cookies();
+  const api = new ApiClient(cookieStore.get('backend_token')?.value);
+
+  const user = await api.getUserMe();
+
   const modelIdFromCookie = cookieStore.get('chat-model');
 
   if (!modelIdFromCookie) {
