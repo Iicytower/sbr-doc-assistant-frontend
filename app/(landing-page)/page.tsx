@@ -14,6 +14,10 @@ export default function HomePage() {
   const [success, setSuccess] = useState<string | null>(null);
   const router = useRouter();
 
+  if (api.getToken()) {
+    router.push("/dashboard");
+  }
+
   async function handleSignIn(formData: FormData) {
     setLoading(true);
     setError(null);

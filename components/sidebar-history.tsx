@@ -23,7 +23,37 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import type { Chat } from '@/lib/db/schema';
-import { fetcher } from '@/lib/utils';
+// MOCK fetcher, nie wykonuje requestów
+const fetcher = async () => ({
+  chats: [
+    {
+      id: 'mock-1',
+      createdAt: new Date().toISOString(),
+      title: 'Mock chat today',
+    },
+    {
+      id: 'mock-2',
+      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      title: 'Mock chat yesterday',
+    },
+    {
+      id: 'mock-3',
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      title: 'Mock chat last week',
+    },
+    {
+      id: 'mock-4',
+      createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+      title: 'Mock chat last month',
+    },
+    {
+      id: 'mock-5',
+      createdAt: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000).toISOString(),
+      title: 'Mock chat older',
+    },
+  ],
+  hasMore: false,
+});
 import { ChatItem } from './sidebar-history-item';
 import useSWRInfinite from 'swr/infinite';
 import { LoaderIcon } from './icons';
@@ -119,30 +149,27 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     ? paginatedChatHistories.every((page) => page.chats.length === 0)
     : false;
 
+  // MOCK handleDelete, nie wykonuje requestów
   const handleDelete = async () => {
-    const deletePromise = fetch(`/api/chat?id=${deleteId}`, {
-      method: 'DELETE',
-    });
-
-    toast.promise(deletePromise, {
-      loading: 'Deleting chat...',
-      success: () => {
-        mutate((chatHistories) => {
-          if (chatHistories) {
-            return chatHistories.map((chatHistory) => ({
-              ...chatHistory,
-              chats: chatHistory.chats.filter((chat) => chat.id !== deleteId),
-            }));
-          }
-        });
-
-        return 'Chat deleted successfully';
+    toast.promise(
+      new Promise((resolve) => setTimeout(resolve, 500)),
+      {
+        loading: 'Deleting chat...',
+        success: () => {
+          mutate((chatHistories) => {
+            if (chatHistories) {
+              return chatHistories.map((chatHistory) => ({
+                ...chatHistory,
+                chats: chatHistory.chats.filter((chat) => chat.id !== deleteId),
+              }));
+            }
+          });
+          return 'Chat deleted successfully (mock)';
+        },
+        error: 'Failed to delete chat (mock)',
       },
-      error: 'Failed to delete chat',
-    });
-
+    );
     setShowDeleteDialog(false);
-
     if (deleteId === id) {
       router.push('/');
     }
