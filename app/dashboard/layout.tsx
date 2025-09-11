@@ -5,8 +5,10 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { auth } from '../(auth)/auth';
 import Script from 'next/script';
 
+
 import { DataStreamProvider } from '@/components/data-stream-provider';
 import RightSidebar from '@/components/right-sidebar';
+import { ChatProvider } from '@/components/chat-context';
 
 export const experimental_ppr = true;
 
@@ -24,15 +26,15 @@ export default async function Layout({
         src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
         strategy="beforeInteractive"
       />
-      <DataStreamProvider>
-        <SidebarProvider defaultOpen={true}>
-          {/* <div className="flex h-screen"> */}
+      <ChatProvider>
+        <DataStreamProvider>
+          <SidebarProvider defaultOpen={true}>
             <AppSidebar user={session?.user} />
             <SidebarInset className="max-w-[68vw]">{children}</SidebarInset>
             <RightSidebar />
-          {/* </div> */}
-        </SidebarProvider>
-      </DataStreamProvider>
+          </SidebarProvider>
+        </DataStreamProvider>
+      </ChatProvider>
     </>
   );
 }

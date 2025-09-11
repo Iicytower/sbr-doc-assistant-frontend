@@ -41,6 +41,7 @@ export interface DeleteDocumentParams {
 export interface ChatPromptPayload {
   prompt: string;
   categories?: string[];
+  chatId?: string;
 }
 
 export interface ChangePasswordPayload {

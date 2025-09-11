@@ -12,8 +12,7 @@ import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';
 // import type { VisibilityType } from './visibility-selector';
 import { useArtifactSelector } from '@/hooks/use-artifact';
-import { unstable_serialize } from 'swr/infinite';
-import { getChatHistoryPaginationKey } from './sidebar-history';
+// import { unstable_serialize } from 'swr/infinite';
 import { toast } from './toast';
 import type { Session } from 'next-auth';
 import { useSearchParams } from 'next/navigation';
@@ -23,25 +22,23 @@ import { ChatSDKError } from '@/lib/errors';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { useDataStream } from './data-stream-provider';
 
+import { useChatContext } from './chat-context';
+
 export function Chat({
-  id,
-  initialMessages,
-  initialChatModel,
-  // initialVisibilityType,
   isReadonly,
   session,
   autoResume,
   disableSuggestedActions = false,
 }: {
-  id: string;
-  initialMessages: ChatMessage[];
-  initialChatModel: string;
-  // initialVisibilityType: VisibilityType;
   isReadonly: boolean;
   session: Session;
   autoResume: boolean;
   disableSuggestedActions?: boolean;
 }) {
+  const { activeChat, loading: chatLoading, error: chatError } = useChatContext();
+  const id = activeChat?.id || '';
+  const initialMessages = activeChat?.messages || [];
+  const initialChatModel = activeChat?.name || '';
   const { visibilityType } = useChatVisibility({
     chatId: id,
   });
@@ -83,7 +80,7 @@ export function Chat({
       setDataStream((ds) => (ds ? [...ds, dataPart] : []));
     },
     onFinish: () => {
-      mutate(unstable_serialize(getChatHistoryPaginationKey));
+      mutate('/api/history');
     },
     onError: (error) => {
       if (error instanceof ChatSDKError) {
@@ -127,6 +124,16 @@ export function Chat({
     setMessages,
   });
 
+  if (chatLoading) {
+    return <div className="flex-1 flex items-center justify-center text-zinc-400">Ładowanie czatu...</div>;
+  }
+  if (chatError) {
+    return <div className="flex-1 flex items-center justify-center text-red-400">Błąd: {chatError}</div>;
+  }
+  if (!activeChat) {
+    return <div className="flex-1 flex items-center justify-center text-zinc-400">Wybierz czat z listy po lewej</div>;
+  }
+
   return (
     <>
       <div className="flex flex-col min-w-0 h-dvh bg-background touch-pan-y overscroll-behavior-contain">
@@ -161,7 +168,6 @@ export function Chat({
               messages={messages}
               setMessages={setMessages}
               sendMessage={sendMessage}
-              // selectedVisibilityType={visibilityType}
               selectedModelId={initialChatModel}
               disableSuggestedActions={disableSuggestedActions}
             />
@@ -183,7 +189,6 @@ export function Chat({
         regenerate={regenerate}
         votes={votes}
         isReadonly={isReadonly}
-  // selectedVisibilityType={visibilityType}
         selectedModelId={initialChatModel}
       />
     </>
