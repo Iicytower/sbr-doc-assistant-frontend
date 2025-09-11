@@ -12,8 +12,11 @@ export default async function Page() {
     redirect('/api/auth/guest');
   }
   const cookieStore = await cookies();
-  const api = new ApiClient(cookieStore.get('backend_token')?.value);
-  const user = await api.getUserMe();
+  const apiClient = new ApiClient(cookieStore.get('backend_token')?.value);
+
+  if (!apiClient.getToken()) {
+    redirect('/');
+  }
 
   return (
     <>

@@ -33,6 +33,19 @@ export default function RightSidebar() {
             <ChangePasswordForm />
             <hr className="my-6" />
             <DeleteAccountSection />
+            <button
+              className="w-full mt-8 bg-sidebar-accent text-sidebar-accent-foreground py-2 rounded font-semibold disabled:opacity-60"
+              onClick={() => {
+                // TODO should use apiClient.logout()
+                localStorage.removeItem('backend_client_token');
+                localStorage.removeItem('lastSelectedChatId');
+                document.cookie = "backend_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                window.location.href = "/";
+              }}
+              type="button"
+            >
+              Logout
+            </button>
           </div>
         ) : null}
       </div>

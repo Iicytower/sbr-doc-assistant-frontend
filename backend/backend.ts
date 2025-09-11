@@ -126,8 +126,10 @@ export default class ApiClient {
       document.cookie = 'backend_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
     }
   }
-
   getToken(): string | null {
+    if (typeof window === 'undefined') {
+      return this.token ?? this.getTokenFromCookie() ?? null;
+    }
     return this.token ?? this.getTokenFromCookie() ?? window.localStorage.getItem(this.tokenStorageKey);
   }
 
@@ -156,6 +158,11 @@ export default class ApiClient {
       this.setTokenCookie(res.token);
     }
     return res;
+  }
+
+  async logout(): Promise<void> {
+    this.clearToken();
+    this.clearTokenFromCookie();
   }
 
   // POST /api/documents (form-data with files)
