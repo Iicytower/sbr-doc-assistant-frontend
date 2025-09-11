@@ -120,8 +120,14 @@ function PureMultimodalInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
+  // Sprawdź, czy ostatnia wiadomość to user
+  const isLastMessageFromUser = messages.length > 0 && messages[messages.length - 1].role === 'user';
+
   const submitForm = useCallback(() => {
-    // Usunięto window.history.replaceState, nie będzie przekierowania
+    if (isLastMessageFromUser) {
+      toast.error('Please wait for the model to finish its response!');
+      return;
+    }
     sendMessage({
       role: 'user',
       parts: [
@@ -154,7 +160,7 @@ function PureMultimodalInput({
     setAttachments,
     setLocalStorageInput,
     width,
-    chatId,
+    isLastMessageFromUser,
   ]);
 
   const uploadFile = async (file: File) => {
@@ -258,11 +264,7 @@ function PureMultimodalInput({
         className="rounded-xl border shadow-sm transition-all duration-200 bg-background border-border focus-within:border-border hover:border-muted-foreground/50"
         onSubmit={(event) => {
           event.preventDefault();
-          if (status !== 'ready') {
-            toast.error('Please wait for the model to finish its response!');
-          } else {
-            submitForm();
-          }
+          submitForm();
         }}
       >
         {(attachments.length > 0 || uploadQueue.length > 0) && (
@@ -320,7 +322,7 @@ function PureMultimodalInput({
           ) : (
             <PromptInputSubmit
               status={status}
-              disabled={!input.trim() || uploadQueue.length > 0}
+              disabled={!input.trim() || uploadQueue.length > 0 || isLastMessageFromUser}
               className="p-2 rounded-full transition-colors duration-200 text-primary-foreground bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground"
             >
               <ArrowUpIcon size={16} />
