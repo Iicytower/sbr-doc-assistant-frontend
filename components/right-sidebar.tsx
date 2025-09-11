@@ -169,25 +169,25 @@ function UploadDocumentSection() {
         ) : docsError ? (
           <div className="text-red-500 text-sm mb-2">{docsError}</div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-2 text-sm">
             {documents.length === 0 && <li className="text-muted-foreground text-sm">Brak dokumentów.</li>}
             {documents.map((doc) => (
-              <li key={doc.id} className="flex items-center justify-between bg-muted rounded px-2 py-1 group relative">
-                <div className="truncate max-w-[160px]" title={doc.filename}>
+              <li key={doc.id} className="flex items-center justify-between bg-muted rounded px-1 py-0.5 group relative min-h-0">
+                <div className="truncate max-w-[120px]" title={doc.filename}>
                   <span className="font-medium">{doc.filename}</span>
-                  <span className="ml-2 text-xs text-muted-foreground">({doc.mimetype})</span>
+                  <span className="ml-1 text-xs text-muted-foreground">({doc.mimetype})</span>
                 </div>
                 <div className="relative">
                   <button
-                    className="p-1 rounded hover:bg-sidebar-accent/20 focus:outline-none"
+                    className="p-0.5 rounded hover:bg-sidebar-accent/20 focus:outline-none min-h-0"
                     onClick={() => setMenuOpenId(menuOpenId === doc.id ? null : doc.id)}
                   >
-                    <span className="text-lg">⋮</span>
+                    <span className="text-base">⋮</span>
                   </button>
                   {menuOpenId === doc.id && (
-                    <div className="absolute right-0 mt-2 w-28 bg-popover border border-sidebar-border rounded shadow-lg z-50">
+                    <div className="absolute right-0 mt-1 w-24 bg-popover border border-sidebar-border rounded shadow-lg z-50">
                       <button
-                        className="block w-full text-left px-4 py-2 text-sm hover:bg-red-100 dark:hover:bg-red-900 text-red-600"
+                        className="block w-full text-left px-3 py-1 text-xs hover:bg-red-100 dark:hover:bg-red-900 text-red-600"
                         onClick={() => handleDelete(doc)}
                       >
                         Delete

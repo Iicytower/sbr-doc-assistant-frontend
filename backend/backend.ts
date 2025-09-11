@@ -130,7 +130,7 @@ export default class ApiClient {
     if (typeof window === 'undefined') {
       return this.token ?? this.getTokenFromCookie() ?? null;
     }
-    return this.token ?? this.getTokenFromCookie() ?? window.localStorage.getItem(this.tokenStorageKey);
+    return this.token ?? this.getTokenFromCookie() ?? window.localStorage.getItem(this.tokenStorageKey) ?? null;
   }
 
   // POST /api/auth/register
