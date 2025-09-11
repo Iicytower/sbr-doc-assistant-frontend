@@ -313,10 +313,8 @@ function PureMultimodalInput({
           autoFocus
         />
         <PromptInputToolbar className="px-3 py-2 !border-t-0 !border-top-0 shadow-none dark:!border-transparent dark:border-0">
-          <PromptInputTools className="gap-2">
-            <AttachmentsButton fileInputRef={fileInputRef} status={status} />
-            <ModelSelectorCompact selectedModelId={selectedModelId} />
-          </PromptInputTools>
+          {/* Usunięto AttachmentsButton i ModelSelectorCompact */}
+          <PromptInputTools className="gap-2" />
           {status === 'submitted' ? (
             <StopButton stop={stop} setMessages={setMessages} />
           ) : (

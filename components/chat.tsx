@@ -52,15 +52,32 @@ export function Chat({
   const apiClient = new ApiClient();
 
   // Custom transport do useChat, korzystający z apiClient.chatPrompt()
+  const { setActiveChatId } = useChatContext();
   const customChatTransport = {
     async sendMessages({ messages, id, body }: any) {
       // Wyciągamy prompt z ostatniej wiadomości użytkownika
       const lastUserMsg = messages.filter((m: any) => m.role === 'user').at(-1);
       const prompt = lastUserMsg?.parts?.find((p: any) => p.type === 'text')?.text || '';
       const categories = body?.categories;
-      const chatId = localStorage.getItem('lastSelectedChatId') as string;
-      // Wywołanie apiClient.chatPrompt
-      const response = await apiClient.chatPrompt({ prompt, categories, chatId });
+      let chatId = localStorage.getItem('lastSelectedChatId') as string;
+
+      // Jeśli nie ma aktywnego czatu (nowy czat), nie przekazuj chatId do backendu
+      const isNewChat = !id || id === '' || chatId === 'undefined' || !chatId;
+      const response = await apiClient.chatPrompt({ prompt, categories, chatId: isNewChat ? undefined : chatId });
+
+
+      // Po każdej odpowiedzi z serwera ustaw lastSelectedChatId na response.chat.id jeśli istnieje
+      if (response?.chat?.id) {
+        localStorage.setItem('lastSelectedChatId', response.chat.id);
+      }
+
+      // Jeśli backend zwrócił nowy chatId (stary flow, dla kompatybilności)
+      if (isNewChat && response?.chatId) {
+        localStorage.setItem('lastSelectedChatId', response.chatId);
+        await setActiveChatId(response.chatId);
+        chatId = response.chatId;
+      }
+
       // Zwróć nową wiadomość asystenta, aby useChat dodał ją do rozmowy
       if (response?.llmResponse?.text) {
         messages.push({
@@ -74,8 +91,10 @@ export function Chat({
 
         setMessages(messages);
       }
-      return { messages };
+      // Zwróć pusty ReadableStream, by spełnić typ (tymczasowo)
+      return new ReadableStream();
     },
+    reconnectToStream: async () => Promise.resolve(null),
   };
 
   const {
@@ -121,7 +140,40 @@ export function Chat({
     return <div className="flex-1 flex items-center justify-center text-red-400">Błąd: {chatError}</div>;
   }
   if (!activeChat) {
-    return <div className="flex-1 flex items-center justify-center text-zinc-400">Wybierz czat z listy po lewej</div>;
+    // Nowy czat: renderuj zachętę i input
+    return (
+      <div className="flex flex-col min-w-0 h-dvh bg-background touch-pan-y overscroll-behavior-contain">
+        <Messages
+          chatId={''}
+          status={status}
+          messages={messages}
+          setMessages={setMessages}
+          regenerate={regenerate}
+          isReadonly={isReadonly}
+          isArtifactVisible={isArtifactVisible}
+          selectedModelId={''}
+          votes={undefined}
+        />
+        <div className="sticky bottom-0 flex gap-2 px-2 md:px-4 pb-3 md:pb-4 mx-auto w-full bg-background max-w-4xl z-[1] border-t-0">
+          {!isReadonly && (
+            <MultimodalInput
+              chatId={''}
+              input={input}
+              setInput={setInput}
+              status={status}
+              stop={stop}
+              attachments={attachments}
+              setAttachments={setAttachments}
+              messages={messages}
+              setMessages={setMessages}
+              sendMessage={sendMessage}
+              selectedModelId={''}
+              disableSuggestedActions={disableSuggestedActions}
+            />
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -142,6 +194,7 @@ export function Chat({
           isReadonly={isReadonly}
           isArtifactVisible={isArtifactVisible}
           selectedModelId={initialChatModel}
+          votes={undefined}
         />
 
         <div className="sticky bottom-0 flex gap-2 px-2 md:px-4 pb-3 md:pb-4 mx-auto w-full bg-background max-w-4xl z-[1] border-t-0">
@@ -178,6 +231,7 @@ export function Chat({
         regenerate={regenerate}
         isReadonly={isReadonly}
         selectedModelId={initialChatModel}
+        votes={undefined}
       />
     </>
   );

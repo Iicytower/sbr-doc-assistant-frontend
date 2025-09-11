@@ -1,6 +1,4 @@
 import { cookies } from 'next/headers';
-
-
 import { Chat } from '@/components/chat';
 import { DataStreamHandler } from '@/components/data-stream-handler';
 import { auth } from '../(auth)/auth';

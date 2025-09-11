@@ -16,11 +16,23 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
+
+import { useChatContext } from './chat-context';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
+  const { clearChat } = useChatContext();
+
+  // Handler tworzenia nowego czatu
+  const handleNewChat = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lastSelectedChatId', 'undefined');
+    }
+    clearChat();
+  };
 
   return (
     <Sidebar className="group-data-[side=left]:border-r-0">
@@ -44,11 +56,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   variant="ghost"
                   type="button"
                   className="p-1 h-8 md:p-2 md:h-fit"
-                  onClick={() => {
-                    setOpenMobile(false);
-                    router.push('/');
-                    router.refresh();
-                  }}
+                  onClick={handleNewChat}
                 >
                   <PlusIcon />
                 </Button>
