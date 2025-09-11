@@ -24,8 +24,7 @@ export default function RightSidebar() {
       <div className="flex-1 overflow-y-auto p-4 bg-background">
         {activeTab === "documents" ? (
           <div>
-            {/* TODO: Wstaw zawartość zakładki Documents */}
-            <p className="text-muted-foreground">Documents content goes here.</p>
+            <UploadDocumentSection />
           </div>
         ) : null}
         {activeTab === "settings" ? (
@@ -39,6 +38,158 @@ export default function RightSidebar() {
       </div>
     </aside>
   );
+// Sekcja uploadu dokumentu PDF/Markdown
+function UploadDocumentSection() {
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [docsError, setDocsError] = useState<string | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  
+  // Przygotowanie apiClientRef do uploadu w kolejnym kroku
+  const apiClientRef = useRef<any>(null);
+  useEffect(() => {
+    if (!apiClientRef.current) {
+      import("../backend/backend").then((mod) => {
+        apiClientRef.current = new mod.default();
+        fetchDocuments();
+      });
+    } else {
+      fetchDocuments();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fetchDocuments = async () => {
+    setDocsLoading(true);
+    setDocsError(null);
+    try {
+      const apiClient = apiClientRef.current;
+      if (!apiClient) throw new Error("Błąd inicjalizacji klienta API.");
+      const res = await apiClient.findAllDocuments();
+      setDocuments(res.documents || []);
+    } catch (err: any) {
+      setDocsError(err?.body?.message || err?.message || "Błąd pobierania dokumentów.");
+    } finally {
+      setDocsLoading(false);
+    }
+  };
+
+  // Obsługa uploadu w kolejnym kroku
+  const handleUpload = async () => {
+    setError(null);
+    setSuccess(null);
+    if (!file) {
+      setError("Wybierz plik do uploadu.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const apiClient = apiClientRef.current;
+      if (!apiClient) throw new Error("Błąd inicjalizacji klienta API.");
+      await apiClient.addDocument({ category: "default", files: [file] });
+      setSuccess("Plik został wysłany.");
+      setFile(null);
+      fetchDocuments();
+    } catch (err: any) {
+      setError(err?.body?.message || err?.message || "Błąd uploadu pliku.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (doc: any) => {
+    setDocsError(null);
+    setDocsLoading(true);
+    try {
+      const apiClient = apiClientRef.current;
+      if (!apiClient) throw new Error("Błąd inicjalizacji klienta API.");
+      await apiClient.deleteDocument({ filename: doc.filename, mimetype: doc.mimetype });
+      setMenuOpenId(null);
+      fetchDocuments();
+    } catch (err: any) {
+      setDocsError(err?.body?.message || err?.message || "Błąd usuwania dokumentu.");
+    } finally {
+      setDocsLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-2">Wybierz plik (PDF lub Markdown):</label>
+      <input
+        type="file"
+        accept=".pdf,.md,application/pdf,text/markdown"
+        className="mb-2"
+        onChange={e => {
+          if (e.target.files && e.target.files[0]) {
+            setFile(e.target.files[0]);
+          } else {
+            setFile(null);
+          }
+        }}
+        value={''}
+      />
+      {file && (
+        <div className="text-xs text-muted-foreground mb-2 truncate" title={file.name}>
+          Wybrano: <span className="font-medium">{file.name}</span>
+        </div>
+      )}
+      <button
+        className="w-full bg-sidebar-accent text-sidebar-accent-foreground py-2 rounded font-semibold disabled:opacity-60 mb-2"
+        onClick={handleUpload}
+        disabled={loading || !file}
+      >
+        {loading ? "Wysyłanie..." : "Upload Document"}
+      </button>
+      {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
+      {success && <div className="text-green-600 text-sm mb-2">{success}</div>}
+
+      <hr className="my-4" />
+      <div>
+        <h3 className="text-base font-semibold mb-2">Twoje dokumenty</h3>
+        {docsLoading ? (
+          <div className="text-muted-foreground text-sm">Ładowanie...</div>
+        ) : docsError ? (
+          <div className="text-red-500 text-sm mb-2">{docsError}</div>
+        ) : (
+          <ul className="space-y-2">
+            {documents.length === 0 && <li className="text-muted-foreground text-sm">Brak dokumentów.</li>}
+            {documents.map((doc) => (
+              <li key={doc.id} className="flex items-center justify-between bg-muted rounded px-2 py-1 group relative">
+                <div className="truncate max-w-[160px]" title={doc.filename}>
+                  <span className="font-medium">{doc.filename}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">({doc.mimetype})</span>
+                </div>
+                <div className="relative">
+                  <button
+                    className="p-1 rounded hover:bg-sidebar-accent/20 focus:outline-none"
+                    onClick={() => setMenuOpenId(menuOpenId === doc.id ? null : doc.id)}
+                  >
+                    <span className="text-lg">⋮</span>
+                  </button>
+                  {menuOpenId === doc.id && (
+                    <div className="absolute right-0 mt-2 w-28 bg-popover border border-sidebar-border rounded shadow-lg z-50">
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-red-100 dark:hover:bg-red-900 text-red-600"
+                        onClick={() => handleDelete(doc)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
 }
 // Sekcja usuwania konta (przeniesiona poza główny komponent)
 function DeleteAccountSection() {
