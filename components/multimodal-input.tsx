@@ -121,8 +121,7 @@ function PureMultimodalInput({
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
   const submitForm = useCallback(() => {
-    window.history.replaceState({}, '', `/chat/${chatId}`);
-
+    // Usunięto window.history.replaceState, nie będzie przekierowania
     sendMessage({
       role: 'user',
       parts: [

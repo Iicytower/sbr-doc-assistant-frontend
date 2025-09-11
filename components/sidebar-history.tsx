@@ -52,6 +52,10 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   // Helper: kliknięcie czatu
   const handleSelectChat = async (chatId: string) => {
     if (activeChat?.id === chatId) return;
+    // Zapisz id czatu do localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lastSelectedChatId', chatId);
+    }
     await setActiveChatId(chatId);
     setOpenMobile(false);
   };

@@ -74,7 +74,6 @@ export default class ApiClient {
   constructor(token?: string) {
     if (token) {
       this.token = token;
-      return;
     }
     const cookieToken = this.getTokenFromCookie();
     if (cookieToken) {

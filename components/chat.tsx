@@ -23,6 +23,7 @@ import type { Attachment, ChatMessage } from '@/lib/types';
 import { useDataStream } from './data-stream-provider';
 
 import { useChatContext } from './chat-context';
+import ApiClient from '@/backend/backend';
 
 export function Chat({
   isReadonly,
@@ -48,6 +49,35 @@ export function Chat({
 
   const [input, setInput] = useState<string>('');
 
+  const apiClient = new ApiClient();
+
+  // Custom transport do useChat, korzystający z apiClient.chatPrompt()
+  const customChatTransport = {
+    async sendMessages({ messages, id, body }: any) {
+      // Wyciągamy prompt z ostatniej wiadomości użytkownika
+      const lastUserMsg = messages.filter((m: any) => m.role === 'user').at(-1);
+      const prompt = lastUserMsg?.parts?.find((p: any) => p.type === 'text')?.text || '';
+      const categories = body?.categories;
+      const chatId = localStorage.getItem('lastSelectedChatId') as string;
+      // Wywołanie apiClient.chatPrompt
+      const response = await apiClient.chatPrompt({ prompt, categories, chatId });
+      // Zwróć nową wiadomość asystenta, aby useChat dodał ją do rozmowy
+      if (response?.llmResponse?.text) {
+        messages.push({
+            id: crypto.randomUUID(),
+            metadata: {
+              createdAt: new Date().toISOString(),
+            },
+            role: 'assistant',
+            parts: [{ type: 'text', text: response.llmResponse.text }],
+          });
+
+        setMessages(messages);
+      }
+      return { messages };
+    },
+  };
+
   const {
     messages,
     setMessages,
@@ -61,35 +91,8 @@ export function Chat({
     messages: initialMessages,
     experimental_throttle: 100,
     generateId: generateUUID,
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-      fetch: fetchWithErrorHandlers,
-      prepareSendMessagesRequest({ messages, id, body }) {
-        return {
-          body: {
-            id,
-            message: messages.at(-1),
-            selectedChatModel: initialChatModel,
-            selectedVisibilityType: visibilityType,
-            ...body,
-          },
-        };
-      },
-    }),
-    onData: (dataPart) => {
-      setDataStream((ds) => (ds ? [...ds, dataPart] : []));
-    },
-    onFinish: () => {
-      mutate('/api/history');
-    },
-    onError: (error) => {
-      if (error instanceof ChatSDKError) {
-        toast({
-          type: 'error',
-          description: error.message,
-        });
-      }
-    },
+    transport: customChatTransport,
+    // Wszystkie akcje przy wysyłaniu wiadomości zostały usunięte
   });
 
   const searchParams = useSearchParams();
@@ -97,22 +100,9 @@ export function Chat({
 
   const [hasAppendedQuery, setHasAppendedQuery] = useState(false);
 
-  useEffect(() => {
-    if (query && !hasAppendedQuery) {
-      sendMessage({
-        role: 'user' as const,
-        parts: [{ type: 'text', text: query }],
-      });
+  // useEffect usunięty – brak automatycznego wysyłania wiadomości i modyfikacji historii przeglądarki
 
-      setHasAppendedQuery(true);
-      window.history.replaceState({}, '', `/chat/${id}`);
-    }
-  }, [query, sendMessage, hasAppendedQuery, id]);
-
-  const { data: votes } = useSWR<Array<Vote>>(
-    messages.length >= 2 ? `/api/vote?chatId=${id}` : null,
-    fetcher,
-  );
+  // Usunięto pobieranie votes przez useSWR – nie będzie requestu do /api/vote
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
@@ -146,7 +136,6 @@ export function Chat({
         <Messages
           chatId={id}
           status={status}
-          votes={votes}
           messages={messages}
           setMessages={setMessages}
           regenerate={regenerate}
@@ -187,7 +176,6 @@ export function Chat({
         messages={messages}
         setMessages={setMessages}
         regenerate={regenerate}
-        votes={votes}
         isReadonly={isReadonly}
         selectedModelId={initialChatModel}
       />

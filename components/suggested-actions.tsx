@@ -38,7 +38,7 @@ function PureSuggestedActions({
             <Suggestion
               suggestion={suggestedAction}
               onClick={(suggestion) => {
-                window.history.replaceState({}, '', `/chat/${chatId}`);
+                // Usunięto window.history.replaceState, nie będzie przekierowania
                 sendMessage({
                   role: 'user',
                   parts: [{ type: 'text', text: suggestion }],
