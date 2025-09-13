@@ -58,13 +58,21 @@ export function Chat({
       // Wyciągamy prompt z ostatniej wiadomości użytkownika
       const lastUserMsg = messages.filter((m: any) => m.role === 'user').at(-1);
       const prompt = lastUserMsg?.parts?.find((p: any) => p.type === 'text')?.text || '';
-      const categories = body?.categories;
+      // files mogą nie być przekazane, więc pobierz z localStorage jeśli nie ma
+      let files = body?.files;
+      if (!files || !Array.isArray(files)) {
+        if (typeof window !== 'undefined') {
+          try {
+            const stored = window.localStorage.getItem('selectedDocuments');
+            if (stored) files = JSON.parse(stored);
+          } catch {}
+        }
+      }
       let chatId = localStorage.getItem('lastSelectedChatId') as string;
 
       // Jeśli nie ma aktywnego czatu (nowy czat), nie przekazuj chatId do backendu
       const isNewChat = !id || id === '' || chatId === 'undefined' || !chatId;
-      const response = await apiClient.chatPrompt({ prompt, categories, chatId: isNewChat ? undefined : chatId });
-
+      const response = await apiClient.chatPrompt({ prompt, files, chatId: isNewChat ? undefined : chatId });
 
       // Po każdej odpowiedzi z serwera ustaw lastSelectedChatId na response.chat.id jeśli istnieje
       if (response?.chat?.id) {

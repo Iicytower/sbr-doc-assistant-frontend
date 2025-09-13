@@ -40,7 +40,7 @@ export interface DeleteDocumentParams {
 
 export interface ChatPromptPayload {
   prompt: string;
-  categories?: string[];
+  files?: string[];
   chatId?: string;
 }
 
