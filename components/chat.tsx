@@ -80,10 +80,14 @@ export function Chat({
       }
 
       // Jeśli backend zwrócił nowy chatId (stary flow, dla kompatybilności)
-      if (isNewChat && response?.chatId) {
-        localStorage.setItem('lastSelectedChatId', response.chatId);
-        await setActiveChatId(response.chatId);
-        chatId = response.chatId;
+      if (isNewChat && response?.chat.id) {
+        localStorage.setItem('lastSelectedChatId', response.chat.id);
+        await setActiveChatId(response.chat.id);
+        chatId = response.chat.id;
+        // Odśwież listę czatów w sidebarze, aby nowy czat pojawił się natychmiast
+        if (typeof window !== 'undefined' && typeof mutate === 'function') {
+          mutate('/api/history');
+        }
       }
 
       // Zwróć nową wiadomość asystenta, aby useChat dodał ją do rozmowy
