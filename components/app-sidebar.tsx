@@ -69,6 +69,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       <SidebarContent>
         <SidebarHistory user={user} />
       </SidebarContent>
+      <div className="pb-[5vh]" />
     </Sidebar>
   );
 }

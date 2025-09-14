@@ -58,7 +58,9 @@ function UploadDocumentSection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [documents, setDocuments] = useState<any[]>([]);
+  // Nowa struktura: userDocuments, generalDocuments
+  const [userDocuments, setUserDocuments] = useState<any[]>([]);
+  const [generalDocuments, setGeneralDocuments] = useState<any[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
   const [docsError, setDocsError] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
@@ -75,13 +77,15 @@ function UploadDocumentSection() {
 
   // Ref do checkboxa "Zaznacz wszystkie"
   const selectAllRef = useRef<HTMLInputElement>(null);
-
+  // Liczba wszystkich dokumentów (oba typy)
+  const allDocuments = [...generalDocuments, ...userDocuments];
   // Ustaw indeterminate na checkboxie "Zaznacz wszystkie"
   useEffect(() => {
     if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = selectedDocuments.length > 0 && selectedDocuments.length < documents.length;
+      selectAllRef.current.indeterminate =
+        selectedDocuments.length > 0 && selectedDocuments.length < allDocuments.length;
     }
-  }, [selectedDocuments, documents]);
+  }, [selectedDocuments, allDocuments.length]);
   
   // Przygotowanie apiClientRef do uploadu w kolejnym kroku
   const apiClientRef = useRef<any>(null);
@@ -113,10 +117,11 @@ function UploadDocumentSection() {
       const apiClient = apiClientRef.current;
       if (!apiClient) throw new Error("Błąd inicjalizacji klienta API.");
       const res = await apiClient.findAllDocuments();
-      setDocuments(res.documents || []);
-      // Synchronizuj selectedDocuments z istniejącymi dokumentami
+      setUserDocuments(res.userDocuments || []);
+      setGeneralDocuments(res.generalDocuments || []);
+      // Synchronizuj selectedDocuments z istniejącymi dokumentami (oba typy)
       setSelectedDocuments((prev) => {
-        const allIds = (res.documents || []).map((doc: any) => doc.id);
+        const allIds = [...(res.generalDocuments || []), ...(res.userDocuments || [])].map((doc: any) => doc.id);
         // Jeśli localStorage puste, domyślnie zaznacz wszystkie
         if (!prev || prev.length === 0) return allIds;
         // Zostaw tylko istniejące
@@ -170,7 +175,7 @@ function UploadDocumentSection() {
 
   return (
     <div>
-      <label className="block text-sm font-medium mb-2">Wybierz plik (PDF lub Markdown):</label>
+      <label className="block text-sm font-medium mb-2">Select file (PDF or Markdown):</label>
       <input
         type="file"
         accept=".pdf,.md,application/pdf,text/markdown"
@@ -201,35 +206,37 @@ function UploadDocumentSection() {
 
       <hr className="my-4" />
       <div>
-        <h3 className="text-base font-semibold mb-2">Twoje dokumenty</h3>
-        {documents.length > 0 && !docsLoading && !docsError && (
-          <div className="flex items-center mb-2">
-            <input
-              ref={selectAllRef}
-              type="checkbox"
-              className="accent-sidebar-accent mr-2"
-              checked={selectedDocuments.length === documents.length}
-              onChange={e => {
-                if (e.target.checked) {
-                  setSelectedDocuments(documents.map(doc => doc.id));
-                } else {
-                  setSelectedDocuments([]);
-                }
-              }}
-            />
-            <span className="text-sm select-none">Zaznacz wszystkie</span>
-          </div>
-        )}
+        <div className="flex items-center mb-2">
+          <input
+            type="checkbox"
+            className="accent-sidebar-accent mr-2"
+            checked={generalDocuments.length > 0 && generalDocuments.every(doc => selectedDocuments.includes(doc.id))}
+            ref={generalDocuments.length > 0 ? selectAllRef : undefined}
+            indeterminate={generalDocuments.length > 0 && generalDocuments.some(doc => selectedDocuments.includes(doc.id)) && !generalDocuments.every(doc => selectedDocuments.includes(doc.id))}
+            onChange={e => {
+              if (e.target.checked) {
+                setSelectedDocuments(prev => [
+                  ...prev.filter(id => !generalDocuments.some(doc => doc.id === id)),
+                  ...generalDocuments.map(doc => doc.id)
+                ]);
+              } else {
+                setSelectedDocuments(prev => prev.filter(id => !generalDocuments.some(doc => doc.id === id)));
+              }
+            }}
+            disabled={generalDocuments.length === 0}
+          />
+          <h3 className="text-base font-semibold">Preuploaded documents</h3>
+        </div>
         {docsLoading ? (
           <div className="text-muted-foreground text-sm">Ładowanie...</div>
         ) : docsError ? (
           <div className="text-red-500 text-sm mb-2">{docsError}</div>
         ) : (
           <ul className="space-y-2 text-sm">
-            {documents.length === 0 && <li className="text-muted-foreground text-sm">Brak dokumentów.</li>}
-            {documents.map((doc) => (
+            {generalDocuments.length === 0 && <li className="text-muted-foreground text-sm">Brak dokumentów.</li>}
+            {generalDocuments.map((doc) => (
               <li key={doc.id} className="flex items-center justify-between bg-muted rounded px-1 py-0.5 group relative min-h-0">
-                <div className="flex items-center gap-2 truncate max-w-[120px]" title={doc.filename}>
+                <div className="flex items-center gap-2 truncate max-w-[220px]" title={doc.filename}>
                   <input
                     type="checkbox"
                     checked={selectedDocuments.includes(doc.id)}
@@ -243,7 +250,59 @@ function UploadDocumentSection() {
                     className="accent-sidebar-accent"
                   />
                   <span className="font-medium">{doc.filename}</span>
-                  <span className="ml-1 text-xs text-muted-foreground">({doc.mimetype})</span>
+                </div>
+                {/* Brak menu po prawej */}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <hr className="my-4" />
+      <div>
+        <div className="flex items-center mb-2">
+          <input
+            type="checkbox"
+            className="accent-sidebar-accent mr-2"
+            checked={userDocuments.length > 0 && userDocuments.every(doc => selectedDocuments.includes(doc.id))}
+            ref={userDocuments.length > 0 ? selectAllRef : undefined}
+            indeterminate={userDocuments.length > 0 && userDocuments.some(doc => selectedDocuments.includes(doc.id)) && !userDocuments.every(doc => selectedDocuments.includes(doc.id))}
+            onChange={e => {
+              if (e.target.checked) {
+                setSelectedDocuments(prev => [
+                  ...prev.filter(id => !userDocuments.some(doc => doc.id === id)),
+                  ...userDocuments.map(doc => doc.id)
+                ]);
+              } else {
+                setSelectedDocuments(prev => prev.filter(id => !userDocuments.some(doc => doc.id === id)));
+              }
+            }}
+            disabled={userDocuments.length === 0}
+          />
+          <h3 className="text-base font-semibold">Your documents</h3>
+        </div>
+        {docsLoading ? (
+          <div className="text-muted-foreground text-sm">Ładowanie...</div>
+        ) : docsError ? (
+          <div className="text-red-500 text-sm mb-2">{docsError}</div>
+        ) : (
+          <ul className="space-y-2 text-sm">
+            {userDocuments.length === 0 && <li className="text-muted-foreground text-sm">Brak dokumentów.</li>}
+            {userDocuments.map((doc) => (
+              <li key={doc.id} className="flex items-center justify-between bg-muted rounded px-1 py-0.5 group relative min-h-0">
+                <div className="flex items-center gap-2 truncate max-w-[220px]" title={doc.filename}>
+                  <input
+                    type="checkbox"
+                    checked={selectedDocuments.includes(doc.id)}
+                    onChange={e => {
+                      if (e.target.checked) {
+                        setSelectedDocuments(prev => [...prev, doc.id]);
+                      } else {
+                        setSelectedDocuments(prev => prev.filter(id => id !== doc.id));
+                      }
+                    }}
+                    className="accent-sidebar-accent"
+                  />
+                  <span className="font-medium">{doc.filename}</span>
                 </div>
                 <div className="relative">
                   <button
