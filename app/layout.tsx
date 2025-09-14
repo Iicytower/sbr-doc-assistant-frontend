@@ -6,7 +6,10 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Header } from '@/components/header';
 
 import './globals.css';
+
 import { SessionProvider } from 'next-auth/react';
+import { SidebarVisibilityProvider } from '@/components/sidebar-visibility-context';
+import { SidebarFloatingToggles } from '@/components/sidebar-floating-toggles';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://chat.vercel.ai'),
@@ -80,9 +83,12 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <Toaster position="top-center" />
-          <SessionProvider>
-            {children}
-          </SessionProvider>
+          <SidebarVisibilityProvider>
+            <SessionProvider>
+              <SidebarFloatingToggles />
+              {children}
+            </SessionProvider>
+          </SidebarVisibilityProvider>
         </ThemeProvider>
       </body>
     </html>

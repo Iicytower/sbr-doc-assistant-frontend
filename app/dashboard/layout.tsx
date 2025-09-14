@@ -9,6 +9,7 @@ import Script from 'next/script';
 import { DataStreamProvider } from '@/components/data-stream-provider';
 import RightSidebar from '@/components/right-sidebar';
 import { ChatProvider } from '@/components/chat-context';
+import { MainContentWrapper } from '@/components/main-content-wrapper';
 
 export const experimental_ppr = true;
 
@@ -30,7 +31,9 @@ export default async function Layout({
         <DataStreamProvider>
           <SidebarProvider defaultOpen={true}>
             <AppSidebar user={session?.user} />
-            <SidebarInset className="max-w-[68vw]">{children}</SidebarInset>
+            <MainContentWrapper>
+              <SidebarInset className="max-w-[100vw]">{children}</SidebarInset>
+            </MainContentWrapper>
             <RightSidebar />
           </SidebarProvider>
         </DataStreamProvider>

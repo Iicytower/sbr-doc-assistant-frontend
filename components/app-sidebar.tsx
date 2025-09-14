@@ -1,6 +1,7 @@
 'use client';
 
 import type { User } from 'next-auth';
+import { useSidebarVisibility } from '@/components/sidebar-visibility-context';
 import { useRouter } from 'next/navigation';
 
 import { PlusIcon } from '@/components/icons';
@@ -25,6 +26,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
   const { clearChat } = useChatContext();
+  const { leftSidebarVisible, hideLeftSidebar } = useSidebarVisibility();
 
   // Handler tworzenia nowego czatu
   const handleNewChat = () => {
@@ -35,10 +37,26 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   };
 
   return (
-    <Sidebar className="group-data-[side=left]:border-r-0">
+    <aside
+      className={`fixed left-0 top-0 h-full w-80 bg-sidebar border-r border-sidebar-border shadow-lg flex flex-col z-40 text-sidebar-foreground transition-transform duration-300 ${leftSidebarVisible ? 'translate-x-0' : '-translate-x-full'}`}
+      style={{ willChange: 'transform' }}
+    >
+      {/* Przycisk do chowania sidebaru */}
+      {leftSidebarVisible && (
+        <button
+          className="absolute top-1/2 right-0 z-50 p-2 -translate-y-1/2 translate-x-1/2 rounded-full bg-sidebar-accent text-sidebar-accent-foreground shadow-lg hover:bg-sidebar-accent/90 transition border border-sidebar-border"
+          onClick={hideLeftSidebar}
+          aria-label="Ukryj lewy sidebar"
+        >
+          {/* Chevron left (obły) */}
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="size-7">
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
+        </button>
+      )}
       <SidebarHeader>
         <SidebarMenu>
-          <div className="flex flex-row justify-between items-center">
+          <div className="flex flex-row justify-between items-center relative">
             <Link
               href="/"
               onClick={() => {
@@ -70,6 +88,6 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarHistory user={user} />
       </SidebarContent>
       <div className="pb-[5vh]" />
-    </Sidebar>
+    </aside>
   );
 }

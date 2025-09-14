@@ -1,13 +1,31 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useSidebarVisibility } from "@/components/sidebar-visibility-context";
 
 export default function RightSidebar() {
   const [activeTab, setActiveTab] = useState<"documents" | "settings">("documents");
+  const { rightSidebarVisible, hideRightSidebar } = useSidebarVisibility();
 
   return (
-    <aside className="fixed right-0 top-0 h-full w-80 bg-sidebar border-l border-sidebar-border shadow-lg flex flex-col z-40 text-sidebar-foreground">
-      <div className="flex border-b border-sidebar-border">
+    <aside
+      className={`fixed right-0 top-0 h-full w-80 bg-sidebar border-l border-sidebar-border shadow-lg flex flex-col z-40 text-sidebar-foreground transition-transform duration-300 ${rightSidebarVisible ? 'translate-x-0' : 'translate-x-full'}`}
+      style={{ willChange: 'transform' }}
+    >
+  {/* Button to hide the sidebar */}
+      {rightSidebarVisible && (
+        <button
+          className="absolute top-1/2 left-0 z-50 p-2 -translate-y-1/2 -translate-x-1/2 rounded-full bg-sidebar-accent text-sidebar-accent-foreground shadow-lg hover:bg-sidebar-accent/90 transition border border-sidebar-border"
+          onClick={hideRightSidebar}
+          aria-label="Hide right sidebar"
+        >
+          {/* Chevron right (rounded) */}
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="size-7">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+      )}
+      <div className="flex border-b border-sidebar-border relative">
         <button
           className={`flex-1 py-3 px-4 text-sm font-medium transition-colors rounded-tl-md ${activeTab === "documents" ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:bg-muted"}`}
           onClick={() => setActiveTab("documents")}
@@ -29,7 +47,7 @@ export default function RightSidebar() {
         ) : null}
         {activeTab === "settings" ? (
           <div>
-            <h2 className="text-lg font-semibold mb-4">Zmiana hasła</h2>
+            <h2 className="text-lg font-semibold mb-4">Change password</h2>
             <ChangePasswordForm />
             <hr className="my-6" />
             <DeleteAccountSection />
@@ -51,20 +69,35 @@ export default function RightSidebar() {
       </div>
     </aside>
   );
-// Sekcja uploadu dokumentu PDF/Markdown
+// Section for uploading PDF/Markdown document
 function UploadDocumentSection() {
-  // Wszystkie useState na górze!
+  // All useState at the top!
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  // Nowa struktura: userDocuments, generalDocuments
+  // New structure: userDocuments, generalDocuments
   const [userDocuments, setUserDocuments] = useState<any[]>([]);
   const [generalDocuments, setGeneralDocuments] = useState<any[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
   const [docsError, setDocsError] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  // Inicjalizacja selectedDocuments z localStorage (jeśli istnieje)
+  // Ref do śledzenia menu
+  const menuRef = useRef<HTMLDivElement>(null);
+  // Zamknij menu po kliknięciu poza
+  useEffect(() => {
+    if (!menuOpenId) return;
+    function handleClickOutside(e: MouseEvent) {
+      // Jeśli menuRef jest ustawione i kliknięto poza menu
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpenId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpenId]);
+  const [confirmDeleteDoc, setConfirmDeleteDoc] = useState<any | null>(null);
+  // Initialize selectedDocuments from localStorage (if exists)
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -75,11 +108,11 @@ function UploadDocumentSection() {
     return [];
   });
 
-  // Ref do checkboxa "Zaznacz wszystkie"
+  // Ref to "Select all" checkbox
   const selectAllRef = useRef<HTMLInputElement>(null);
-  // Liczba wszystkich dokumentów (oba typy)
+  // Number of all documents (both types)
   const allDocuments = [...generalDocuments, ...userDocuments];
-  // Ustaw indeterminate na checkboxie "Zaznacz wszystkie"
+  // Set indeterminate on "Select all" checkbox
   useEffect(() => {
     if (selectAllRef.current) {
       selectAllRef.current.indeterminate =
@@ -87,7 +120,7 @@ function UploadDocumentSection() {
     }
   }, [selectedDocuments, allDocuments.length]);
   
-  // Przygotowanie apiClientRef do uploadu w kolejnym kroku
+  // Prepare apiClientRef for upload in the next step
   const apiClientRef = useRef<any>(null);
   useEffect(() => {
     if (!apiClientRef.current) {
@@ -101,7 +134,7 @@ function UploadDocumentSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Zapisuj selectedDocuments do localStorage przy każdej zmianie
+  // Save selectedDocuments to localStorage on every change
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -115,7 +148,7 @@ function UploadDocumentSection() {
     setDocsError(null);
     try {
       const apiClient = apiClientRef.current;
-      if (!apiClient) throw new Error("Błąd inicjalizacji klienta API.");
+  if (!apiClient) throw new Error("API client initialization error.");
       const res = await apiClient.findAllDocuments();
       setUserDocuments(res.userDocuments || []);
       setGeneralDocuments(res.generalDocuments || []);
@@ -128,30 +161,30 @@ function UploadDocumentSection() {
         return allIds.filter((id: string) => prev.includes(id));
       });
     } catch (err: any) {
-      setDocsError(err?.body?.message || err?.message || "Błąd pobierania dokumentów.");
+  setDocsError(err?.body?.message || err?.message || "Error fetching documents.");
     } finally {
       setDocsLoading(false);
     }
   };
 
-  // Obsługa uploadu w kolejnym kroku
+  // Handle upload in the next step
   const handleUpload = async () => {
     setError(null);
     setSuccess(null);
     if (!file) {
-      setError("Wybierz plik do uploadu.");
+      setError("Select a file to upload.");
       return;
     }
     setLoading(true);
     try {
       const apiClient = apiClientRef.current;
-      if (!apiClient) throw new Error("Błąd inicjalizacji klienta API.");
+  if (!apiClient) throw new Error("API client initialization error.");
       await apiClient.addDocument({ category: "default", files: [file] });
-      setSuccess("Plik został wysłany.");
+  setSuccess("File has been uploaded.");
       setFile(null);
       fetchDocuments();
     } catch (err: any) {
-      setError(err?.body?.message || err?.message || "Błąd uploadu pliku.");
+  setError(err?.body?.message || err?.message || "File upload error.");
     } finally {
       setLoading(false);
     }
@@ -165,6 +198,7 @@ function UploadDocumentSection() {
       if (!apiClient) throw new Error("Błąd inicjalizacji klienta API.");
       await apiClient.deleteDocument({ filename: doc.filename, mimetype: doc.mimetype });
       setMenuOpenId(null);
+      setConfirmDeleteDoc(null);
       fetchDocuments();
     } catch (err: any) {
       setDocsError(err?.body?.message || err?.message || "Błąd usuwania dokumentu.");
@@ -173,27 +207,67 @@ function UploadDocumentSection() {
     }
   };
 
+  // Drag-and-drop logic
+  const dropRef = useRef<HTMLDivElement>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
+  };
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0]);
+    }
+  };
+
   return (
     <div>
-      <label className="block text-sm font-medium mb-2">Select file (PDF or Markdown):</label>
-      <input
-        type="file"
-        accept=".pdf,.md,application/pdf,text/markdown"
-        className="mb-2"
-        onChange={e => {
-          if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
-          } else {
-            setFile(null);
-          }
-        }}
-        value={''}
-      />
-      {file && (
-        <div className="text-xs text-muted-foreground mb-2 truncate" title={file.name}>
-          Wybrano: <span className="font-medium">{file.name}</span>
-        </div>
-      )}
+      <div
+        ref={dropRef}
+        onDragEnter={handleDrag}
+        onDragOver={handleDrag}
+        onDragLeave={handleDrag}
+        onDrop={handleDrop}
+  className={`relative flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 mb-4 transition-colors ${dragActive ? "border-sidebar-accent bg-sidebar-accent/10" : "border-muted bg-muted/50"}`}
+        style={{ minHeight: 120 }}
+      >
+        <label htmlFor="file-upload" className="flex flex-col items-center cursor-pointer w-full">
+          <svg className="size-10 text-sidebar-accent mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+          </svg>
+          <span className="text-sm font-medium text-sidebar-foreground/80">Drag & drop PDF/Markdown here<br/>or <span className="underline text-sidebar-accent">click to select</span></span>
+          <input
+            id="file-upload"
+            type="file"
+            accept=".pdf,.md,application/pdf,text/markdown"
+            className="hidden"
+            onChange={e => {
+              if (e.target.files && e.target.files[0]) {
+                setFile(e.target.files[0]);
+              } else {
+                setFile(null);
+              }
+            }}
+            value={''}
+          />
+        </label>
+        {file && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background px-3 py-1 rounded shadow border mt-2">
+            <span className="text-xs font-medium truncate max-w-[120px]" title={file.name}>{file.name}</span>
+            <button
+              className="text-red-500 hover:text-red-700 text-xs font-bold px-1"
+              onClick={() => setFile(null)}
+              type="button"
+              aria-label="Remove file"
+            >✕</button>
+          </div>
+        )}
+      </div>
       <button
         className="w-full bg-sidebar-accent text-sidebar-accent-foreground py-2 rounded font-semibold disabled:opacity-60 mb-2"
         onClick={handleUpload}
@@ -201,18 +275,43 @@ function UploadDocumentSection() {
       >
         {loading ? "Wysyłanie..." : "Upload Document"}
       </button>
-      {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
-      {success && <div className="text-green-600 text-sm mb-2">{success}</div>}
+      {error && (
+        <div className="bg-red-100 text-red-700 border border-red-200 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            className="ml-2 text-red-400 hover:text-red-700 text-lg font-bold px-1 rounded focus:outline-none"
+            onClick={() => setError(null)}
+            aria-label="Dismiss error"
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+      )}
+      {success && (
+        <div className="bg-green-100 text-green-700 border border-green-200 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
+          <span>{success}</span>
+          <button
+            className="ml-2 text-green-400 hover:text-green-700 text-lg font-bold px-1 rounded focus:outline-none"
+            onClick={() => setSuccess(null)}
+            aria-label="Dismiss success"
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <hr className="my-4" />
-      <div>
-        <div className="flex items-center mb-2">
+      {/* Preuploaded Documents */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
           <input
             type="checkbox"
-            className="accent-sidebar-accent mr-2"
+            className="accent-sidebar-accent"
             checked={generalDocuments.length > 0 && generalDocuments.every(doc => selectedDocuments.includes(doc.id))}
             ref={generalDocuments.length > 0 ? selectAllRef : undefined}
-            indeterminate={generalDocuments.length > 0 && generalDocuments.some(doc => selectedDocuments.includes(doc.id)) && !generalDocuments.every(doc => selectedDocuments.includes(doc.id))}
+            // indeterminate ustawiane przez useEffect na ref
             onChange={e => {
               if (e.target.checked) {
                 setSelectedDocuments(prev => [
@@ -225,18 +324,18 @@ function UploadDocumentSection() {
             }}
             disabled={generalDocuments.length === 0}
           />
-          <h3 className="text-base font-semibold">Preuploaded documents</h3>
+          <h3 className="text-base font-semibold tracking-tight">Preuploaded documents</h3>
         </div>
         {docsLoading ? (
           <div className="text-muted-foreground text-sm">Ładowanie...</div>
         ) : docsError ? (
-          <div className="text-red-500 text-sm mb-2">{docsError}</div>
+          <div className="bg-red-100 text-red-700 border border-red-200 rounded px-3 py-2 text-sm mb-2">{docsError}</div>
         ) : (
-          <ul className="space-y-2 text-sm">
-            {generalDocuments.length === 0 && <li className="text-muted-foreground text-sm">Brak dokumentów.</li>}
+          <div className="grid grid-cols-1 gap-2">
+            {generalDocuments.length === 0 && <div className="text-muted-foreground text-sm">Brak dokumentów.</div>}
             {generalDocuments.map((doc) => (
-              <li key={doc.id} className="flex items-center justify-between bg-muted rounded px-1 py-0.5 group relative min-h-0">
-                <div className="flex items-center gap-2 truncate max-w-[220px]" title={doc.filename}>
+              <div key={doc.id} className={`flex items-center justify-between bg-background border rounded-lg px-3 py-2 shadow-sm transition group ${selectedDocuments.includes(doc.id) ? 'border-sidebar-accent' : 'border-muted'}` }>
+                <div className="flex items-center gap-2 truncate max-w-[180px]" title={doc.filename}>
                   <input
                     type="checkbox"
                     checked={selectedDocuments.includes(doc.id)}
@@ -249,23 +348,22 @@ function UploadDocumentSection() {
                     }}
                     className="accent-sidebar-accent"
                   />
-                  <span className="font-medium">{doc.filename}</span>
+                  <span className="font-medium truncate">{doc.filename}</span>
                 </div>
-                {/* Brak menu po prawej */}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
-      <hr className="my-4" />
+      {/* User Documents */}
       <div>
-        <div className="flex items-center mb-2">
+        <div className="flex items-center gap-2 mb-2">
           <input
             type="checkbox"
-            className="accent-sidebar-accent mr-2"
+            className="accent-sidebar-accent"
             checked={userDocuments.length > 0 && userDocuments.every(doc => selectedDocuments.includes(doc.id))}
             ref={userDocuments.length > 0 ? selectAllRef : undefined}
-            indeterminate={userDocuments.length > 0 && userDocuments.some(doc => selectedDocuments.includes(doc.id)) && !userDocuments.every(doc => selectedDocuments.includes(doc.id))}
+            // indeterminate ustawiane przez useEffect na ref
             onChange={e => {
               if (e.target.checked) {
                 setSelectedDocuments(prev => [
@@ -278,18 +376,18 @@ function UploadDocumentSection() {
             }}
             disabled={userDocuments.length === 0}
           />
-          <h3 className="text-base font-semibold">Your documents</h3>
+          <h3 className="text-base font-semibold tracking-tight">Your documents</h3>
         </div>
         {docsLoading ? (
           <div className="text-muted-foreground text-sm">Ładowanie...</div>
         ) : docsError ? (
-          <div className="text-red-500 text-sm mb-2">{docsError}</div>
+          <div className="bg-red-100 text-red-700 border border-red-200 rounded px-3 py-2 text-sm mb-2">{docsError}</div>
         ) : (
-          <ul className="space-y-2 text-sm">
-            {userDocuments.length === 0 && <li className="text-muted-foreground text-sm">Brak dokumentów.</li>}
+          <div className="grid grid-cols-1 gap-2">
+            {userDocuments.length === 0 && <div className="text-muted-foreground text-sm">Brak dokumentów.</div>}
             {userDocuments.map((doc) => (
-              <li key={doc.id} className="flex items-center justify-between bg-muted rounded px-1 py-0.5 group relative min-h-0">
-                <div className="flex items-center gap-2 truncate max-w-[220px]" title={doc.filename}>
+              <div key={doc.id} className={`flex items-center justify-between bg-background border rounded-lg px-3 py-2 shadow-sm transition group ${selectedDocuments.includes(doc.id) ? 'border-sidebar-accent' : 'border-muted'}` }>
+                <div className="flex items-center gap-2 truncate" title={doc.filename}>
                   <input
                     type="checkbox"
                     checked={selectedDocuments.includes(doc.id)}
@@ -302,29 +400,62 @@ function UploadDocumentSection() {
                     }}
                     className="accent-sidebar-accent"
                   />
-                  <span className="font-medium">{doc.filename}</span>
+                  <span className="font-medium truncate">{doc.filename}</span>
                 </div>
-                <div className="relative">
+                <div className="relative flex items-center">
                   <button
-                    className="p-0.5 rounded hover:bg-sidebar-accent/20 focus:outline-none min-h-0"
+                    className="p-1 rounded hover:bg-sidebar-accent/20 focus:outline-none min-h-0"
                     onClick={() => setMenuOpenId(menuOpenId === doc.id ? null : doc.id)}
+                    aria-label="Open document menu"
                   >
-                    <span className="text-base">⋮</span>
+                    <svg className="size-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>
                   </button>
                   {menuOpenId === doc.id && (
-                    <div className="absolute right-0 mt-1 w-24 bg-popover border border-sidebar-border rounded shadow-lg z-50">
+                    <div
+                      ref={menuRef}
+                      className="absolute right-0 mt-2 w-28 bg-popover border border-sidebar-border rounded shadow-lg z-50"
+                    >
                       <button
-                        className="block w-full text-left px-3 py-1 text-xs hover:bg-red-100 dark:hover:bg-red-900 text-red-600"
-                        onClick={() => handleDelete(doc)}
+                        className="block w-full text-left px-3 py-2 text-xs hover:bg-red-100 dark:hover:bg-red-900 text-red-600 rounded"
+                        onClick={() => {
+                          setMenuOpenId(null);
+                          setConfirmDeleteDoc(doc);
+                        }}
                       >
                         Delete
                       </button>
                     </div>
                   )}
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+            {/* Confirmation popup for deleting document */}
+            {confirmDeleteDoc && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="bg-white dark:bg-sidebar p-6 rounded shadow-lg max-w-sm w-full">
+                    <h3 className="text-lg font-bold mb-2 text-red-600">Confirm document deletion</h3>
+                    <p className="mb-4 text-sm">Are you sure you want to delete the document <span className='font-semibold'>{confirmDeleteDoc.filename}</span>? This operation cannot be undone.</p>
+                  {docsError && <div className="text-red-500 text-sm mb-2">{docsError}</div>}
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      className="px-4 py-2 rounded bg-muted text-sidebar-foreground"
+                      onClick={() => setConfirmDeleteDoc(null)}
+                      disabled={docsLoading}
+                    >
+                      Anuluj
+                    </button>
+                    <button
+                      className="px-4 py-2 rounded bg-red-600 text-white font-semibold disabled:opacity-60"
+                      onClick={() => handleDelete(confirmDeleteDoc)}
+                      disabled={docsLoading}
+                    >
+                      {docsLoading ? "Usuwanie..." : "Usuń na zawsze"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -351,7 +482,7 @@ function DeleteAccountSection() {
     setLoading(true);
     try {
       const apiClient = apiClientRef.current;
-      if (!apiClient) throw new Error("Błąd inicjalizacji klienta API.");
+        if (!apiClient) throw new Error("API client initialization error.");
       await apiClient.deleteUser();
       // Usuń tokeny
       apiClient.clearToken();
@@ -359,27 +490,27 @@ function DeleteAccountSection() {
       // Przekieruj na landing page
       window.location.href = "/";
     } catch (err: any) {
-      setError(err?.body?.message || err?.message || "Błąd usuwania konta.");
+        setError(err?.body?.message || err?.message || "Account deletion error.");
       setLoading(false);
     }
   };
 
   return (
     <div className="mt-2">
-      <h2 className="text-lg font-semibold mb-2 text-red-600">Usuń konto</h2>
-      <p className="text-sm text-muted-foreground mb-2">Usunięcie konta jest nieodwracalne. Wszystkie Twoje dane zostaną trwale usunięte.</p>
+        <h2 className="text-lg font-semibold mb-2 text-red-600">Delete account</h2>
+        <p className="text-sm text-muted-foreground mb-2">Account deletion is irreversible. All your data will be permanently deleted.</p>
       <button
         className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60"
         onClick={() => setShowConfirm(true)}
         disabled={loading}
       >
-        Usuń konto
+          Delete account
       </button>
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white dark:bg-sidebar p-6 rounded shadow-lg max-w-sm w-full">
-            <h3 className="text-lg font-bold mb-2 text-red-600">Potwierdź usunięcie konta</h3>
-            <p className="mb-4 text-sm">Czy na pewno chcesz usunąć swoje konto? Tej operacji nie można cofnąć.</p>
+              <h3 className="text-lg font-bold mb-2 text-red-600">Confirm account deletion</h3>
+              <p className="mb-4 text-sm">Are you sure you want to delete your account? This operation cannot be undone.</p>
             {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
             <div className="flex gap-2 justify-end">
               <button
@@ -387,14 +518,14 @@ function DeleteAccountSection() {
                 onClick={() => setShowConfirm(false)}
                 disabled={loading}
               >
-                Anuluj
+                  Cancel
               </button>
               <button
                 className="px-4 py-2 rounded bg-red-600 text-white font-semibold disabled:opacity-60"
                 onClick={handleDelete}
                 disabled={loading}
               >
-                {loading ? "Usuwanie..." : "Usuń na zawsze"}
+                  {loading ? "Deleting..." : "Delete forever"}
               </button>
             </div>
           </div>
@@ -426,25 +557,25 @@ function ChangePasswordForm() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    if (newPassword !== repeatNewPassword) {
-      setError("Nowe hasła nie są identyczne.");
+      if (newPassword !== repeatNewPassword) {
+        setError("New passwords do not match.");
       return;
     }
-    if (!oldPassword || !newPassword) {
-      setError("Wszystkie pola są wymagane.");
+      if (!oldPassword || !newPassword) {
+        setError("All fields are required.");
       return;
     }
     setLoading(true);
     try {
       const apiClient = apiClientRef.current;
-      if (!apiClient) throw new Error("Błąd inicjalizacji klienta API.");
+        if (!apiClient) throw new Error("API client initialization error.");
       await apiClient.changeUserPassword({ oldPassword, newPassword });
-      setSuccess("Hasło zostało zmienione.");
+        setSuccess("Password has been changed.");
       setOldPassword("");
       setNewPassword("");
       setRepeatNewPassword("");
     } catch (err: any) {
-      setError(err?.body?.message || err?.message || "Błąd zmiany hasła.");
+        setError(err?.body?.message || err?.message || "Password change error.");
     } finally {
       setLoading(false);
     }
@@ -453,7 +584,7 @@ function ChangePasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-1">Stare hasło</label>
+          <label className="block text-sm font-medium mb-1">Old password</label>
         <input
           type="password"
           className="w-full px-3 py-2 border rounded bg-background text-sidebar-foreground"
@@ -463,7 +594,7 @@ function ChangePasswordForm() {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Nowe hasło</label>
+          <label className="block text-sm font-medium mb-1">New password</label>
         <input
           type="password"
           className="w-full px-3 py-2 border rounded bg-background text-sidebar-foreground"
@@ -473,7 +604,7 @@ function ChangePasswordForm() {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Powtórz nowe hasło</label>
+          <label className="block text-sm font-medium mb-1">Repeat new password</label>
         <input
           type="password"
           className="w-full px-3 py-2 border rounded bg-background text-sidebar-foreground"
@@ -489,7 +620,7 @@ function ChangePasswordForm() {
         className="w-full bg-sidebar-accent text-sidebar-accent-foreground py-2 rounded font-semibold disabled:opacity-60"
         disabled={loading}
       >
-        {loading ? "Zmiana..." : "Zmień hasło"}
+          {loading ? "Changing..." : "Change password"}
       </button>
     </form>
   );

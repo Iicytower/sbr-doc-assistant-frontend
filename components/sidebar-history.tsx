@@ -12,6 +12,8 @@ import { useChatContext } from './chat-context';
 import { ChatItem } from './sidebar-history-item';
 import useSWRInfinite from 'swr/infinite';
 import { SidebarGroup, SidebarGroupContent, SidebarMenu, useSidebar } from '@/components/ui/sidebar';
+import { useSidebarVisibility } from '@/components/sidebar-visibility-context';
+import { useIsMobilePortrait } from '@/hooks/use-is-mobile-portrait';
 import type { Chat } from '@/lib/db/schema';
 
 export function SidebarHistory({ user }: { user: User | undefined }) {
@@ -49,6 +51,8 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
 
   const hasEmptyChatHistory = allChats.length === 0;
 
+  const isMobilePortrait = useIsMobilePortrait();
+  const { hideLeftSidebar } = useSidebarVisibility();
   // Helper: kliknięcie czatu
   const handleSelectChat = async (chatId: string) => {
     if (activeChat?.id === chatId) return;
@@ -57,7 +61,10 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
       localStorage.setItem('lastSelectedChatId', chatId);
     }
     await setActiveChatId(chatId);
-    setOpenMobile(false);
+    if (isMobilePortrait) {
+      setOpenMobile(false);
+      hideLeftSidebar();
+    }
   };
 
   // Usuwanie czatu przez customowy backend
