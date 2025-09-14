@@ -13,7 +13,7 @@ import { SidebarFloatingToggles } from '@/components/sidebar-floating-toggles';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://chat.vercel.ai'),
-  title: 'Next.js Chatbot Template',
+  title: 'sbr-assistant',
   description: 'Next.js chatbot template using the AI SDK.',
 };
 
