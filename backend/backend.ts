@@ -67,7 +67,9 @@ export interface DeleteChatByIdParams {
    ---------------------- */
 
 export default class ApiClient {
-  private baseUrl = `http://localhost:3000/api`;
+  private baseUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BACKEND_API_URL
+    ? process.env.NEXT_PUBLIC_BACKEND_API_URL
+    : 'http://localhost:3000/api';
   private token: string | null = null;
   private tokenStorageKey = 'backend_client_token';
 
