@@ -6,7 +6,23 @@ import type {
 } from 'ai';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import type { DBMessage, Document } from '@/lib/db/schema';
+// Removed import of DBMessage, Document from deleted db/schema
+// Minimal local type definitions:
+type Document = {
+  id: string;
+  title: string;
+  createdAt: Date;
+  content?: string;
+  kind?: 'code' | 'text' | 'image' | 'sheet';
+  userId?: string;
+};
+type DBMessage = {
+  id: string;
+  role: string;
+  parts: unknown;
+  createdAt: Date;
+  attachments?: unknown[];
+};
 import { ChatSDKError, type ErrorCode } from './errors';
 import type { ChatMessage, ChatTools, CustomUIDataTypes } from './types';
 import { formatISO } from 'date-fns';

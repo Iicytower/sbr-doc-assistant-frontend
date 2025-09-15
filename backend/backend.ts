@@ -67,7 +67,7 @@ export interface DeleteChatByIdParams {
    ---------------------- */
 
 export default class ApiClient {
-  private baseUrl: string = `http://localhost:3000/api`;
+  private baseUrl = `http://localhost:3000/api`;
   private token: string | null = null;
   private tokenStorageKey = 'backend_client_token';
 
@@ -256,7 +256,7 @@ export default class ApiClient {
     }
 
     if (!options?.skipAuth && this.getToken()) {
-      headers['Authorization'] = `Bearer ${this.getToken()}`;
+      headers.Authorization = `Bearer ${this.getToken()}`;
     }
 
     const res = await fetch(url.toString(), {

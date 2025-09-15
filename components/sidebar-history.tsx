@@ -2,7 +2,6 @@
 
 import { isToday, isYesterday, subMonths, subWeeks } from 'date-fns';
 // import { useParams, useRouter } from 'next/navigation';
-import type { User } from 'next-auth';
 import { useState } from 'react';
 
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
@@ -14,9 +13,9 @@ import useSWRInfinite from 'swr/infinite';
 import { SidebarGroup, SidebarGroupContent, SidebarMenu, useSidebar } from '@/components/ui/sidebar';
 import { useSidebarVisibility } from '@/components/sidebar-visibility-context';
 import { useIsMobilePortrait } from '@/hooks/use-is-mobile-portrait';
-import type { Chat } from '@/lib/db/schema';
+import type { Chat } from '@/lib/types';
 
-export function SidebarHistory({ user }: { user: User | undefined }) {
+export function SidebarHistory() {
   const { setOpenMobile } = useSidebar();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -187,17 +186,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   }
 
   // Jeśli użytkownik nie jest zalogowany
-  if (!user) {
-    return (
-      <SidebarGroup>
-        <SidebarGroupContent>
-          <div className="flex flex-row gap-2 justify-center items-center px-2 w-full text-sm text-zinc-500">
-            Login to save and revisit previous chats!
-          </div>
-        </SidebarGroupContent>
-      </SidebarGroup>
-    );
-  }
+
 
   return (
     <>
@@ -359,22 +348,26 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
               Enter a new name for this chat.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <input
-            className="w-full border rounded px-2 py-1 mt-2"
-            value={renameValue}
-            onChange={e => setRenameValue(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') handleRename();
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              handleRename();
             }}
-            disabled={renameLoading}
-            autoFocus
-          />
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowRenameDialog(false)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRename} disabled={renameLoading || !renameValue.trim()}>
-              {renameLoading ? 'Renaming...' : 'Rename'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          >
+            <input
+              className="w-full border rounded px-2 py-1 mt-2"
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              disabled={renameLoading}
+              autoFocus
+            />
+            <AlertDialogFooter>
+              <AlertDialogCancel type="button" onClick={() => setShowRenameDialog(false)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction type="submit" disabled={renameLoading || !renameValue.trim()}>
+                {renameLoading ? 'Renaming...' : 'Rename'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </form>
         </AlertDialogContent>
       </AlertDialog>
     </>

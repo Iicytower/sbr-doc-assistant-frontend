@@ -15,6 +15,7 @@ export default function RightSidebar() {
   {/* Button to hide the sidebar */}
       {rightSidebarVisible && (
         <button
+          type="button"
           className="absolute top-1/2 left-0 z-50 p-2 -translate-y-1/2 -translate-x-1/2 rounded-full bg-sidebar-accent text-sidebar-accent-foreground shadow-lg hover:bg-sidebar-accent/90 transition border border-sidebar-border"
           onClick={hideRightSidebar}
           aria-label="Hide right sidebar"
@@ -27,12 +28,14 @@ export default function RightSidebar() {
       )}
       <div className="flex border-b border-sidebar-border relative">
         <button
+          type="button"
           className={`flex-1 py-3 px-4 text-sm font-medium transition-colors rounded-tl-md ${activeTab === "documents" ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:bg-muted"}`}
           onClick={() => setActiveTab("documents")}
         >
           Documents
         </button>
         <button
+          type="button"
           className={`flex-1 py-3 px-4 text-sm font-medium transition-colors rounded-tr-md ${activeTab === "settings" ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:bg-muted"}`}
           onClick={() => setActiveTab("settings")}
         >
@@ -220,7 +223,7 @@ function UploadDocumentSection() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    if (e.dataTransfer.files?.[0]) {
       setFile(e.dataTransfer.files[0]);
     }
   };
@@ -233,7 +236,8 @@ function UploadDocumentSection() {
         onDragOver={handleDrag}
         onDragLeave={handleDrag}
         onDrop={handleDrop}
-  className={`relative flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 mb-4 transition-colors ${dragActive ? "border-sidebar-accent bg-sidebar-accent/10" : "border-muted bg-muted/50"}`}
+        role="region"
+        className={`relative flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 mb-4 transition-colors ${dragActive ? "border-sidebar-accent bg-sidebar-accent/10" : "border-muted bg-muted/50"}`}
         style={{ minHeight: 120 }}
       >
         <label htmlFor="file-upload" className="flex flex-col items-center cursor-pointer w-full">
@@ -247,7 +251,7 @@ function UploadDocumentSection() {
             accept=".pdf,.md,application/pdf,text/markdown"
             className="hidden"
             onChange={e => {
-              if (e.target.files && e.target.files[0]) {
+              if (e.target.files?.[0]) {
                 setFile(e.target.files[0]);
               } else {
                 setFile(null);
@@ -269,6 +273,7 @@ function UploadDocumentSection() {
         )}
       </div>
       <button
+        type="button"
         className="w-full bg-sidebar-accent text-sidebar-accent-foreground py-2 rounded font-semibold disabled:opacity-60 mb-2"
         onClick={handleUpload}
         disabled={loading || !file}
@@ -404,6 +409,7 @@ function UploadDocumentSection() {
                 </div>
                 <div className="relative flex items-center">
                   <button
+                    type="button"
                     className="p-1 rounded hover:bg-sidebar-accent/20 focus:outline-none min-h-0"
                     onClick={() => setMenuOpenId(menuOpenId === doc.id ? null : doc.id)}
                     aria-label="Open document menu"
@@ -416,6 +422,7 @@ function UploadDocumentSection() {
                       className="absolute right-0 mt-2 w-28 bg-popover border border-sidebar-border rounded shadow-lg z-50"
                     >
                       <button
+                        type="button"
                         className="block w-full text-left px-3 py-2 text-xs hover:bg-red-100 dark:hover:bg-red-900 text-red-600 rounded"
                         onClick={() => {
                           setMenuOpenId(null);
@@ -438,18 +445,20 @@ function UploadDocumentSection() {
                   {docsError && <div className="text-red-500 text-sm mb-2">{docsError}</div>}
                   <div className="flex gap-2 justify-end">
                     <button
+                      type="button"
                       className="px-4 py-2 rounded bg-muted text-sidebar-foreground"
                       onClick={() => setConfirmDeleteDoc(null)}
                       disabled={docsLoading}
                     >
-                      Anuluj
+                      Cancel
                     </button>
                     <button
+                      type="button"
                       className="px-4 py-2 rounded bg-red-600 text-white font-semibold disabled:opacity-60"
                       onClick={() => handleDelete(confirmDeleteDoc)}
                       disabled={docsLoading}
                     >
-                      {docsLoading ? "Usuwanie..." : "Usuń na zawsze"}
+                        {docsLoading ? "Deleting..." : "Delete forever"}
                     </button>
                   </div>
                 </div>
@@ -500,11 +509,12 @@ function DeleteAccountSection() {
         <h2 className="text-lg font-semibold mb-2 text-red-600">Delete account</h2>
         <p className="text-sm text-muted-foreground mb-2">Account deletion is irreversible. All your data will be permanently deleted.</p>
       <button
+        type="button"
         className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60"
         onClick={() => setShowConfirm(true)}
         disabled={loading}
       >
-          Delete account
+        Delete account
       </button>
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -514,18 +524,20 @@ function DeleteAccountSection() {
             {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
             <div className="flex gap-2 justify-end">
               <button
+                type="button"
                 className="px-4 py-2 rounded bg-muted text-sidebar-foreground"
                 onClick={() => setShowConfirm(false)}
                 disabled={loading}
               >
-                  Cancel
+                Cancel
               </button>
               <button
+                type="button"
                 className="px-4 py-2 rounded bg-red-600 text-white font-semibold disabled:opacity-60"
                 onClick={handleDelete}
                 disabled={loading}
               >
-                  {loading ? "Deleting..." : "Delete forever"}
+                {loading ? "Deleting..." : "Delete forever"}
               </button>
             </div>
           </div>
@@ -584,8 +596,9 @@ function ChangePasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-          <label className="block text-sm font-medium mb-1">Old password</label>
+        <label htmlFor="old-password" className="block text-sm font-medium mb-1">Old password</label>
         <input
+          id="old-password"
           type="password"
           className="w-full px-3 py-2 border rounded bg-background text-sidebar-foreground"
           value={oldPassword}
@@ -594,8 +607,9 @@ function ChangePasswordForm() {
         />
       </div>
       <div>
-          <label className="block text-sm font-medium mb-1">New password</label>
+        <label htmlFor="new-password" className="block text-sm font-medium mb-1">New password</label>
         <input
+          id="new-password"
           type="password"
           className="w-full px-3 py-2 border rounded bg-background text-sidebar-foreground"
           value={newPassword}
@@ -604,8 +618,9 @@ function ChangePasswordForm() {
         />
       </div>
       <div>
-          <label className="block text-sm font-medium mb-1">Repeat new password</label>
+        <label htmlFor="repeat-new-password" className="block text-sm font-medium mb-1">Repeat new password</label>
         <input
+          id="repeat-new-password"
           type="password"
           className="w-full px-3 py-2 border rounded bg-background text-sidebar-foreground"
           value={repeatNewPassword}
@@ -620,7 +635,7 @@ function ChangePasswordForm() {
         className="w-full bg-sidebar-accent text-sidebar-accent-foreground py-2 rounded font-semibold disabled:opacity-60"
         disabled={loading}
       >
-          {loading ? "Changing..." : "Change password"}
+        {loading ? "Changing..." : "Change password"}
       </button>
     </form>
   );

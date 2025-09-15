@@ -1,24 +1,16 @@
-import type { Chat } from '@/lib/db/schema';
+import type { Chat } from '@/lib/types';
 import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from './ui/sidebar';
-import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import {
-  CheckCircleFillIcon,
-  GlobeIcon,
-  LockIcon,
   MoreHorizontalIcon,
   PencilEditIcon,
   TrashIcon,

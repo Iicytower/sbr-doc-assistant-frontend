@@ -1,9 +1,8 @@
 import { useSWRConfig } from 'swr';
 import { useCopyToClipboard } from 'usehooks-ts';
 
-import type { Vote } from '@/lib/db/schema';
 
-import { CopyIcon, ThumbDownIcon, ThumbUpIcon, PencilEditIcon } from './icons';
+import { CopyIcon, PencilEditIcon } from './icons';
 import { Actions, Action } from './elements/actions';
 import { memo } from 'react';
 import equal from 'fast-deep-equal';
@@ -19,7 +18,7 @@ export function PureMessageActions({
 }: {
   chatId: string;
   message: ChatMessage;
-  vote: Vote | undefined;
+  vote: undefined;
   isLoading: boolean;
   setMode?: (mode: 'view' | 'edit') => void;
 }) {

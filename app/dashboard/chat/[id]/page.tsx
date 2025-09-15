@@ -2,11 +2,10 @@
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 
-import { auth } from '@/app/(auth)/auth';
+
 import { Chat } from '@/components/chat';
 import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
 import { DataStreamHandler } from '@/components/data-stream-handler';
-import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 import { convertToUIMessages } from '@/lib/utils';
 
 export default async function Page(props: { params: Promise<{ id: string }> }) {
@@ -18,21 +17,19 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     notFound();
   }
 
-  const session = await auth();
-
-  if (!session) {
-    redirect('/api/auth/guest');
-  }
-
-  if (chat.visibility === 'private') {
-    if (!session.user) {
-      return notFound();
-    }
-
-    if (session.user.id !== chat.userId) {
-      return notFound();
-    }
-  }
+  // MOCK: pomiń autoryzację, zakładaj zawsze dostęp
+  const session = { user: { id: 'mock-user', name: 'Mock User' } };
+  // if (!session) {
+  //   redirect('/api/auth/guest');
+  // }
+  // if (chat.visibility === 'private') {
+  //   if (!session.user) {
+  //     return notFound();
+  //   }
+  //   if (session.user.id !== chat.userId) {
+  //     return notFound();
+  //   }
+  // }
 
   const messagesFromDb = await getMessagesByChatId({
     id,
@@ -47,12 +44,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     return (
       <>
         <Chat
-          id={chat.id}
-          initialMessages={uiMessages}
-          initialChatModel={DEFAULT_CHAT_MODEL}
-          initialVisibilityType={chat.visibility as import('@/components/visibility-selector').VisibilityType}
           isReadonly={session?.user?.id !== chat.userId}
-          session={session}
           autoResume={true}
         />
         <DataStreamHandler />
@@ -63,12 +55,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   return (
     <>
       <Chat
-        id={chat.id}
-        initialMessages={uiMessages}
-        initialChatModel={chatModelFromCookie.value}
-  initialVisibilityType={chat.visibility as import('@/components/visibility-selector').VisibilityType}
         isReadonly={session?.user?.id !== chat.userId}
-        session={session}
         autoResume={true}
       />
       <DataStreamHandler />

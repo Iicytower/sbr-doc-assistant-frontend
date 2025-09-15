@@ -1,6 +1,6 @@
-import { auth } from '@/app/(auth)/auth';
+
 import type { NextRequest } from 'next/server';
-import { getChatsByUserId } from '@/lib/db/queries';
+// Wszystkie funkcje backendowe zamockowane lub usunięte
 import { ChatSDKError } from '@/lib/errors';
 
 export async function GET(request: NextRequest) {
@@ -17,18 +17,12 @@ export async function GET(request: NextRequest) {
     ).toResponse();
   }
 
-  const session = await auth();
+  // MOCK: pomiń autoryzację, zakładaj zawsze dostęp
+  // const session = await auth();
+  // if (!session?.user) {
+  //   return new ChatSDKError('unauthorized:chat').toResponse();
+  // }
 
-  if (!session?.user) {
-    return new ChatSDKError('unauthorized:chat').toResponse();
-  }
-
-  const chats = await getChatsByUserId({
-    id: session.user.id,
-    limit,
-    startingAfter,
-    endingBefore,
-  });
-
-  return Response.json(chats);
+  // MOCK: zwróć pustą tablicę czatów
+  return Response.json([]);
 }

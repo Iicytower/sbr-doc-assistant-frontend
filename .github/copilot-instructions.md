@@ -6,8 +6,6 @@ This project uses the following main technologies:
 - **TypeScript** – for type safety and modern JavaScript features.
 - **Tailwind CSS** – for utility-first, responsive styling.
 - **shadcn/ui** – for reusable UI components.
-- **Drizzle ORM** – for database access and schema management.
-- **Neon Postgres** – as the database backend.
 - **Playwright** – for end-to-end testing.
 - **pnpm** – as the package manager.
 - **REST API** – for backend communication (all API calls are centralized in the `backend/` folder).
@@ -21,7 +19,6 @@ This project follows a modular architecture typical for Next.js applications usi
 - **`app/`** – The main directory containing Next.js routes, with subfolders for each view (e.g., `/chat`, `/settings`, `/auth`). Each contains its own `page.tsx`, `layout.tsx`, and possibly local components.
 - **`components/`** – A collection of reusable UI components (e.g., buttons, forms, modals), often built with shadcn/ui and Tailwind CSS.
 - **`lib/`** – Helper functions, AI SDK utilities, database integrations, session handling, validation, etc.
-- **`db/`** – Database schema definitions (ORM, migrations) and Neon Postgres connection configuration.
 - **`ai/`** – Logic for integrating with various AI model providers, adapters, and prompt configurations.
 - **`backend/`** – Functions for communicating with your own backend via REST API. Contains files (e.g., `auth.ts`, `chat.ts`, `artifacts.ts`) with functions for each API domain. These are the only place for direct REST calls to your backend.
 - **`types/`** – TypeScript types, interfaces, and global types for the entire application.

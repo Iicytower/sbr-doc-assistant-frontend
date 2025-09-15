@@ -1,41 +1,30 @@
 'use client';
-
-import { DefaultChatTransport } from 'ai';
 import { useChat } from '@ai-sdk/react';
-import { useEffect, useState } from 'react';
-import useSWR, { useSWRConfig } from 'swr';
+import { useState } from 'react';
+import { useSWRConfig } from 'swr';
 import { ChatHeader } from '@/components/chat-header';
-import type { Vote } from '@/lib/db/schema';
-import { fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
+import { generateUUID } from '@/lib/utils';
 import { Artifact } from './artifact';
 import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';
 // import type { VisibilityType } from './visibility-selector';
 import { useArtifactSelector } from '@/hooks/use-artifact';
-// import { unstable_serialize } from 'swr/infinite';
-import { toast } from './toast';
-import type { Session } from 'next-auth';
 import { useSearchParams } from 'next/navigation';
 import { useChatVisibility } from '@/hooks/use-chat-visibility';
 import { useAutoResume } from '@/hooks/use-auto-resume';
-import { ChatSDKError } from '@/lib/errors';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { useDataStream } from './data-stream-provider';
 
 import { useChatContext } from './chat-context';
 import ApiClient from '@/backend/backend';
 
-export function Chat({
-  isReadonly,
-  session,
-  autoResume,
-  disableSuggestedActions = false,
-}: {
+interface ChatProps {
   isReadonly: boolean;
-  session: Session;
   autoResume: boolean;
   disableSuggestedActions?: boolean;
-}) {
+}
+
+export function Chat({ isReadonly, autoResume, disableSuggestedActions = false }: ChatProps) {
   const { activeChat, loading: chatLoading, error: chatError } = useChatContext();
   const id = activeChat?.id || '';
   const initialMessages = activeChat?.messages || [];
@@ -72,7 +61,7 @@ export function Chat({
 
       // Jeśli nie ma aktywnego czatu (nowy czat), nie przekazuj chatId do backendu
       const isNewChat = !id || id === '' || chatId === 'undefined' || !chatId;
-      const response = await apiClient.chatPrompt({ prompt, files, chatId: isNewChat ? undefined : chatId });
+      const response = await apiClient.chatPrompt({ prompt, files, chatId });
 
       // Po każdej odpowiedzi z serwera ustaw lastSelectedChatId na response.chat.id jeśli istnieje
       if (response?.chat?.id) {
@@ -86,7 +75,7 @@ export function Chat({
         chatId = response.chat.id;
         // Odśwież listę czatów w sidebarze, aby nowy czat pojawił się natychmiast
         if (typeof window !== 'undefined' && typeof mutate === 'function') {
-          mutate('/api/history');
+          mutate('/api/history', undefined, { revalidate: true });
         }
       }
 
@@ -194,7 +183,6 @@ export function Chat({
         <ChatHeader
           chatId={id}
           isReadonly={isReadonly}
-          session={session}
         />
 
         <Messages

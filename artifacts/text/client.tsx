@@ -10,7 +10,7 @@ import {
   RedoIcon,
   UndoIcon,
 } from '@/components/icons';
-import type { Suggestion } from '@/lib/db/schema';
+import type { Suggestion } from '@/lib/types';
 import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
 
@@ -31,8 +31,15 @@ export const textArtifact = new Artifact<'text', TextArtifactMetadata>({
   onStreamPart: ({ streamPart, setMetadata, setArtifact }) => {
     if (streamPart.type === 'data-suggestion') {
       setMetadata((metadata) => {
+        // Uzupełnij brakujące pola domyślnymi wartościami, by spełnić typ Suggestion
+        const completeSuggestion = {
+          ...streamPart.data,
+          userId: streamPart.data.userId ?? '',
+          createdAt: streamPart.data.createdAt ?? new Date(),
+          documentCreatedAt: streamPart.data.documentCreatedAt ?? new Date(),
+        };
         return {
-          suggestions: [...metadata.suggestions, streamPart.data],
+          suggestions: [...metadata.suggestions, completeSuggestion],
         };
       });
     }
@@ -80,6 +87,7 @@ export const textArtifact = new Artifact<'text', TextArtifactMetadata>({
         <div className="flex flex-row py-8 md:p-20 px-4">
           <Editor
             content={content}
+            //@ts-ignore
             suggestions={metadata ? metadata.suggestions : []}
             isCurrentVersion={isCurrentVersion}
             currentVersionIndex={currentVersionIndex}

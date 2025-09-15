@@ -10,7 +10,14 @@ import {
 } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { useDebounceCallback, useWindowSize } from 'usehooks-ts';
-import type { Document, Vote } from '@/lib/db/schema';
+
+// Tymczasowy typ dokumentu (zgodny z użyciem w tym pliku)
+type Document = {
+  id: string;
+  title?: string;
+  content: string;
+  createdAt?: string | Date;
+};
 import { fetcher } from '@/lib/utils';
 import { MultimodalInput } from './multimodal-input';
 import { Toolbar } from './toolbar';
@@ -26,7 +33,6 @@ import { sheetArtifact } from '@/artifacts/sheet/client';
 import { textArtifact } from '@/artifacts/text/client';
 import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
-import type { VisibilityType } from './visibility-selector';
 import type { Attachment, ChatMessage } from '@/lib/types';
 
 export const artifactDefinitions = [
@@ -78,7 +84,7 @@ function PureArtifact({
   setAttachments: Dispatch<SetStateAction<Attachment[]>>;
   messages: ChatMessage[];
   setMessages: UseChatHelpers<ChatMessage>['setMessages'];
-  votes: Array<Vote> | undefined;
+  votes: undefined;
   sendMessage: UseChatHelpers<ChatMessage>['sendMessage'];
   regenerate: UseChatHelpers<ChatMessage>['regenerate'];
   isReadonly: boolean;
@@ -425,13 +431,13 @@ function PureArtifact({
                     </div>
                   ) : document ? (
                     <div className="text-sm text-muted-foreground">
-                      {`Updated ${formatDistance(
-                        new Date(document.createdAt),
-                        new Date(),
-                        {
-                          addSuffix: true,
-                        },
-                      )}`}
+                      {document.createdAt
+                        ? `Updated ${formatDistance(
+                            new Date(document.createdAt),
+                            new Date(),
+                            { addSuffix: true },
+                          )}`
+                        : 'Updated: n/a'}
                     </div>
                   ) : (
                     <div className="w-32 h-3 mt-2 bg-muted-foreground/20 rounded-md animate-pulse" />
@@ -507,8 +513,5 @@ export const Artifact = memo(PureArtifact, (prevProps, nextProps) => {
   if (!equal(prevProps.votes, nextProps.votes)) return false;
   if (prevProps.input !== nextProps.input) return false;
   if (!equal(prevProps.messages, nextProps.messages.length)) return false;
-
-    return false;
-
   return true;
 });

@@ -17,7 +17,6 @@ import { useLocalStorage, useWindowSize } from 'usehooks-ts';
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
 import { PreviewAttachment } from './preview-attachment';
 import { Button } from './ui/button';
-import { SuggestedActions } from './suggested-actions';
 import {
   PromptInput,
   PromptInputTextarea,
@@ -28,13 +27,12 @@ import {
   PromptInputModelSelectTrigger,
   PromptInputModelSelectContent,
 } from './elements/prompt-input';
-import { SelectItem, SelectValue } from '@/components/ui/select';
+import { SelectItem, } from '@/components/ui/select';
 import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
-import type { VisibilityType } from './visibility-selector';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { chatModels } from '@/lib/ai/models';
 import { saveChatModelAsCookie } from '@/app/dashboard/actions';
@@ -340,11 +338,8 @@ export const MultimodalInput = memo(
     if (prevProps.input !== nextProps.input) return false;
     if (prevProps.status !== nextProps.status) return false;
     if (!equal(prevProps.attachments, nextProps.attachments)) return false;
-
-      return false;
     if (prevProps.selectedModelId !== nextProps.selectedModelId) return false;
     if (prevProps.disableSuggestedActions !== nextProps.disableSuggestedActions) return false;
-
     return true;
   },
 );

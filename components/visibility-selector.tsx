@@ -51,7 +51,6 @@ export function VisibilitySelector({
 
   const { visibilityType, setVisibilityType } = useChatVisibility({
     chatId,
-    initialVisibilityType: selectedVisibilityType,
   });
 
   const selectedVisibility = useMemo(

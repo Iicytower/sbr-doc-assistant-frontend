@@ -14,6 +14,7 @@ export function SidebarFloatingToggles() {
     <>
       {!leftSidebarVisible && (
         <button
+          type="button"
           className="fixed left-0 top-1/2 z-50 p-2 -translate-y-1/2 rounded-full bg-sidebar-accent text-sidebar-accent-foreground shadow-lg hover:bg-sidebar-accent/90 transition border border-sidebar-border"
           onClick={showLeftSidebar}
           aria-label="Pokaż lewy sidebar"
@@ -26,6 +27,7 @@ export function SidebarFloatingToggles() {
       )}
       {!rightSidebarVisible && (
         <button
+          type="button"
           className="fixed right-0 top-1/2 z-50 p-2 -translate-y-1/2 rounded-full bg-sidebar-accent text-sidebar-accent-foreground shadow-lg hover:bg-sidebar-accent/90 transition border border-sidebar-border"
           onClick={showRightSidebar}
           aria-label="Pokaż prawy sidebar"

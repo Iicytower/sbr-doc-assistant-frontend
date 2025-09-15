@@ -11,7 +11,15 @@ import {
 import type { ArtifactKind, UIArtifact } from './artifact';
 import { FileIcon, FullscreenIcon, ImageIcon, LoaderIcon } from './icons';
 import { cn, fetcher } from '@/lib/utils';
-import type { Document } from '@/lib/db/schema';
+
+// Minimalny lokalny typ dokumentu (zgodny z użyciem w tym pliku)
+type Document = {
+  id: string;
+  title?: string;
+  content: string;
+  createdAt?: string | Date;
+  kind: ArtifactKind;
+};
 import { InlineDocumentSkeleton } from './document-skeleton';
 import useSWR from 'swr';
 import { Editor } from './text-editor';
@@ -93,7 +101,6 @@ export function DocumentPreview({
           content: artifact.content,
           id: artifact.documentId,
           createdAt: new Date(),
-          userId: 'noop',
         }
       : null;
 
@@ -107,11 +114,11 @@ export function DocumentPreview({
         setArtifact={setArtifact}
       />
       <DocumentHeader
-        title={document.title}
+        title={document.title ?? ''}
         kind={document.kind}
         isStreaming={artifact.status === 'streaming'}
       />
-      <DocumentContent document={document} />
+  <DocumentContent document={{ ...document, title: document.title ?? '' }} />
     </div>
   );
 }
@@ -272,7 +279,7 @@ const DocumentContent = ({ document }: { document: Document }) => {
         </div>
       ) : document.kind === 'image' ? (
         <ImageEditor
-          title={document.title}
+          title={document.title ?? ''}
           content={document.content ?? ''}
           isCurrentVersion={true}
           currentVersionIndex={0}

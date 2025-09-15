@@ -59,6 +59,7 @@ export default function HomePage() {
         <h1 className="text-3xl font-bold mb-6 text-center">Welcome to SBR Doc Assistant</h1>
         <div className="flex justify-center mb-6">
           <button
+            type="button"
             className={`px-4 py-2 rounded-l ${mode === "signin" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
             onClick={() => setMode("signin")}
             disabled={loading}
@@ -66,6 +67,7 @@ export default function HomePage() {
             Sign In
           </button>
           <button
+            type="button"
             className={`px-4 py-2 rounded-r ${mode === "signup" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
             onClick={() => setMode("signup")}
             disabled={loading}

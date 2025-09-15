@@ -1,5 +1,5 @@
-import { auth } from '@/app/(auth)/auth';
-import { getSuggestionsByDocumentId } from '@/lib/db/queries';
+
+// Wszystkie funkcje backendowe zamockowane lub usunięte
 import { ChatSDKError } from '@/lib/errors';
 
 export async function GET(request: Request) {
@@ -13,25 +13,12 @@ export async function GET(request: Request) {
     ).toResponse();
   }
 
-  const session = await auth();
+  // MOCK: pomiń autoryzację, zakładaj zawsze dostęp
+  // const session = await auth();
+  // if (!session?.user) {
+  //   return new ChatSDKError('unauthorized:suggestions').toResponse();
+  // }
 
-  if (!session?.user) {
-    return new ChatSDKError('unauthorized:suggestions').toResponse();
-  }
-
-  const suggestions = await getSuggestionsByDocumentId({
-    documentId,
-  });
-
-  const [suggestion] = suggestions;
-
-  if (!suggestion) {
-    return Response.json([], { status: 200 });
-  }
-
-  if (suggestion.userId !== session.user.id) {
-    return new ChatSDKError('forbidden:api').toResponse();
-  }
-
-  return Response.json(suggestions, { status: 200 });
+  // MOCK: zwróć pustą tablicę sugestii
+  return Response.json([], { status: 200 });
 }

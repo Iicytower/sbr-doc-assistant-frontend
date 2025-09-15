@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { auth } from '../(auth)/auth';
+
 import Script from 'next/script';
 
 
@@ -18,8 +18,9 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const [session, cookieStore] = await Promise.all([auth(), cookies()]);
-  const isCollapsed = cookieStore.get('sidebar:state')?.value === 'false' ? false : false;
+  // MOCK: pomiń autoryzację, zakładaj zawsze dostęp
+  const [session, cookieStore] = await Promise.all([{ user: { id: 'mock-user', name: 'Mock User' } }, cookies()]);
+  const isCollapsed = false;
 
   return (
     <>
@@ -30,11 +31,13 @@ export default async function Layout({
       <ChatProvider>
         <DataStreamProvider>
           <SidebarProvider defaultOpen={true}>
-            <AppSidebar user={session?.user} />
-            <MainContentWrapper>
-              <SidebarInset className="max-w-[100vw]">{children}</SidebarInset>
-            </MainContentWrapper>
-            <RightSidebar />
+            <div className="flex flex-row w-full min-h-screen">
+              <AppSidebar />
+              <MainContentWrapper>
+                <SidebarInset className="max-w-[100vw]">{children}</SidebarInset>
+              </MainContentWrapper>
+              <RightSidebar />
+            </div>
           </SidebarProvider>
         </DataStreamProvider>
       </ChatProvider>
