@@ -9,7 +9,7 @@ export default function RightSidebar() {
 
   return (
     <aside
-      className={`fixed right-0 top-0 h-full w-80 bg-sidebar border-l border-sidebar-border shadow-lg flex flex-col z-40 text-sidebar-foreground transition-transform duration-300 ${rightSidebarVisible ? 'translate-x-0' : 'translate-x-full'}`}
+      className={`fixed right-0 top-0 h-full w-[20vw] bg-sidebar border-l border-sidebar-border shadow-lg flex flex-col z-40 text-sidebar-foreground transition-transform duration-300 ${rightSidebarVisible ? 'translate-x-0' : 'translate-x-full'}`}
       style={{ willChange: 'transform' }}
     >
   {/* Button to hide the sidebar */}
@@ -248,7 +248,7 @@ function UploadDocumentSection() {
           <input
             id="file-upload"
             type="file"
-            accept=".pdf,.md,application/pdf,text/markdown"
+            accept=".pdf,.md,.json,application/pdf,text/markdown,application/json"
             className="hidden"
             onChange={e => {
               if (e.target.files?.[0]) {

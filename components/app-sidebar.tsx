@@ -30,7 +30,7 @@ export function AppSidebar() {
     <>
       {/* Przycisk do pokazania sidebara usunięty, zostaje tylko globalny SidebarFloatingToggles */}
       <aside
-        className={`fixed left-0 top-0 h-full w-80 bg-sidebar border-r border-sidebar-border shadow-lg flex flex-col z-40 text-sidebar-foreground transition-transform duration-300 ${leftSidebarVisible ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed left-0 top-0 h-full w-[20vw] bg-sidebar border-r border-sidebar-border shadow-lg flex flex-col z-40 text-sidebar-foreground transition-transform duration-300 ${leftSidebarVisible ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ willChange: 'transform' }}
         // NIE renderuj żadnych SidebarTrigger, SidebarRail itp. – tylko własny przycisk
       >

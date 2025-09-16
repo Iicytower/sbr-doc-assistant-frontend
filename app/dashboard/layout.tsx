@@ -10,6 +10,7 @@ import { DataStreamProvider } from '@/components/data-stream-provider';
 import RightSidebar from '@/components/right-sidebar';
 import { ChatProvider } from '@/components/chat-context';
 import { MainContentWrapper } from '@/components/main-content-wrapper';
+import DashboardLayoutClient from '@/components/dashboard-layout-client';
 
 export const experimental_ppr = true;
 
@@ -28,19 +29,7 @@ export default async function Layout({
         src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
         strategy="beforeInteractive"
       />
-      <ChatProvider>
-        <DataStreamProvider>
-          <SidebarProvider defaultOpen={true}>
-            <div className="flex flex-row w-full min-h-screen">
-              <AppSidebar />
-              <MainContentWrapper>
-                <SidebarInset className="max-w-[100vw]">{children}</SidebarInset>
-              </MainContentWrapper>
-              <RightSidebar />
-            </div>
-          </SidebarProvider>
-        </DataStreamProvider>
-      </ChatProvider>
+      <DashboardLayoutClient>{children}</DashboardLayoutClient>
     </>
   );
 }
