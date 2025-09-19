@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
 import { useSidebarVisibility } from "@/components/sidebar-visibility-context";
 
 export default function RightSidebar() {
@@ -49,30 +50,62 @@ export default function RightSidebar() {
           </div>
         ) : null}
         {activeTab === "settings" ? (
-          <div>
-            <h2 className="text-lg font-semibold mb-4">Change password</h2>
-            <ChangePasswordForm />
-            <hr className="my-6" />
-            <DeleteAccountSection />
-            <button
-              className="w-full mt-8 bg-sidebar-accent text-sidebar-accent-foreground py-2 rounded font-semibold disabled:opacity-60"
-              onClick={() => {
-                // TODO should use apiClient.logout()
-                localStorage.removeItem('backend_client_token');
-                localStorage.removeItem('lastSelectedChatId');
-                document.cookie = "backend_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                window.location.href = "/";
-              }}
-              type="button"
-            >
-              Logout
-            </button>
-          </div>
+            <div>
+              <h2 className="text-lg font-semibold mb-4">Change password</h2>
+              <ChangePasswordForm />
+              <hr className="my-6" />
+              <DeleteAccountSection />
+              <hr className="my-6" />
+              <ThemeSwitcher />
+              <button
+                className="w-full mt-8 bg-sidebar-accent text-sidebar-accent-foreground py-2 rounded font-semibold disabled:opacity-60"
+                onClick={() => {
+                  // TODO should use apiClient.logout()
+                  localStorage.removeItem('backend_client_token');
+                  localStorage.removeItem('lastSelectedChatId');
+                  document.cookie = "backend_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                  window.location.href = "/";
+                }}
+                type="button"
+              >
+                Logout
+              </button>
+            </div>
         ) : null}
       </div>
     </aside>
   );
 // Section for uploading PDF/Markdown document
+// ThemeSwitcher component for theme toggle
+function ThemeSwitcher() {
+  const { theme, setTheme, systemTheme } = useTheme();
+  return (
+    <div className="mb-4">
+      <label className="block text-sm font-medium mb-2">Theme</label>
+      <div className="flex gap-2">
+        <button
+          className={`px-3 py-1 rounded ${theme === 'light' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'bg-muted text-sidebar-foreground'}`}
+          onClick={() => setTheme('light')}
+        >
+          Light
+        </button>
+        <button
+          className={`px-3 py-1 rounded ${theme === 'dark' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'bg-muted text-sidebar-foreground'}`}
+          onClick={() => setTheme('dark')}
+        >
+          Dark
+        </button>
+        <button
+          className={`px-3 py-1 rounded ${theme === 'system' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'bg-muted text-sidebar-foreground'}`}
+          onClick={() => setTheme('system')}
+        >
+          System
+        </button>
+      </div>
+      <div className="mt-2 text-xs text-muted-foreground">Current: {theme === 'system' ? `System (${systemTheme})` : theme}</div>
+    </div>
+  );
+}
 function UploadDocumentSection() {
   // All useState at the top!
   const [file, setFile] = useState<File | null>(null);
