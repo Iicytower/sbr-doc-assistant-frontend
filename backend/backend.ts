@@ -107,11 +107,11 @@ export default class ApiClient {
   setToken(token: string, persist = true) {
     this.token = token;
     this.setTokenCookie(token);
-    if (persist && typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem(this.tokenStorageKey, token);
-      } catch (e) { /* ignore */ }
-    }
+    // if (persist && typeof window !== 'undefined') {
+    //   try {
+    //     window.localStorage.setItem(this.tokenStorageKey, token);
+    //   } catch (e) { /* ignore */ }
+    // }
   }
 
 
@@ -132,7 +132,8 @@ export default class ApiClient {
     if (typeof window === 'undefined') {
       return this.token ?? this.getTokenFromCookie() ?? null;
     }
-    return this.token ?? this.getTokenFromCookie() ?? window.localStorage.getItem(this.tokenStorageKey) ?? null;
+    // return this.token ?? this.getTokenFromCookie() ?? window.localStorage.getItem(this.tokenStorageKey) ?? null;
+    return this.getTokenFromCookie();
   }
 
   // POST /api/auth/register
