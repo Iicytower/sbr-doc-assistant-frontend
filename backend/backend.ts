@@ -189,6 +189,11 @@ export default class ApiClient {
     return this.request('GET', `${this.baseUrl}/documents/findAll`);
   }
 
+  // PATCH /api/documents/change-category
+  async changeDocumentCategory(payload: { documentId: string; newCategory: string }): Promise<any> {
+    return this.request('PATCH', `${this.baseUrl}/documents/change-category`, { body: payload });
+  }
+
   // POST /api/chat/prompt
   async chatPrompt(payload: ChatPromptPayload): Promise<any> {
     return this.request('POST', `${this.baseUrl}/chat/prompt`, { body: payload });

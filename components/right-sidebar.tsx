@@ -107,7 +107,15 @@ function ThemeSwitcher() {
   );
 }
 function UploadDocumentSection() {
+  // Collapsed state for folders and main sections
+  const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
+  const [collapsedGeneral, setCollapsedGeneral] = useState(false);
+  const [collapsedUser, setCollapsedUser] = useState(false);
+  // Drag-and-drop for category change (Your documents only)
   // All useState at the top!
+  // Drag-and-drop for category change (Your documents only)
+  const [draggedDoc, setDraggedDoc] = useState<any | null>(null);
+  const [dragOverCat, setDragOverCat] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -133,6 +141,14 @@ function UploadDocumentSection() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [menuOpenId]);
   const [confirmDeleteDoc, setConfirmDeleteDoc] = useState<any | null>(null);
+  // State for change category dialog
+  const [changeCategoryDoc, setChangeCategoryDoc] = useState<any | null>(null);
+  const [changeCategoryInput, setChangeCategoryInput] = useState<string>("");
+  const [changeCategoryDropdownOpen, setChangeCategoryDropdownOpen] = useState(false);
+  const [changeCategoryIsCustom, setChangeCategoryIsCustom] = useState(false);
+  const changeCategoryInputRef = useRef<HTMLInputElement>(null);
+  const [changeCategoryLoading, setChangeCategoryLoading] = useState(false);
+  const [changeCategoryError, setChangeCategoryError] = useState<string | null>(null);
   // Initialize selectedDocuments from localStorage (if exists)
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>(() => {
     if (typeof window !== "undefined") {
@@ -168,7 +184,9 @@ function UploadDocumentSection() {
   const generalDocsByCategory = groupByCategory(generalDocuments);
   const userDocsByCategory = groupByCategory(userDocuments);
 
-  // Zbierz wszystkie kategorie z obu typów dokumentów
+  // Zbierz tylko kategorie z dokumentów użytkownika
+  const userCategories = Object.keys(userDocsByCategory).filter(Boolean);
+  // allCategories is still used for upload, userCategories for change category
   const allCategories = Array.from(new Set([
     ...Object.keys(generalDocsByCategory),
     ...Object.keys(userDocsByCategory)
@@ -341,14 +359,14 @@ function UploadDocumentSection() {
 
       {/* Custom combo box kategorii */}
       <div className="mb-4 w-full">
-        <label htmlFor="category-input" className="block text-sm font-medium mb-2">Category</label>
+        <label htmlFor="category-input" className="block text-sm font-medium mb-2">Folder</label>
         <div className="relative w-full">
           <input
             id="category-input"
             ref={categoryInputRef}
             type="text"
             className="w-full px-3 py-2 border rounded bg-background text-sidebar-foreground"
-            placeholder="Select or enter category"
+            placeholder="Select or enter folder"
             value={categoryInput}
             onChange={e => {
               setCategoryInput(e.target.value);
@@ -359,8 +377,8 @@ function UploadDocumentSection() {
             onBlur={() => setTimeout(() => setCategoryDropdownOpen(false), 120)}
             autoComplete="off"
           />
-          {/* Dropdown z kategoriami */}
-          {categoryDropdownOpen && allCategories.length > 0 && (
+          {/* Dropdown z kategoriami użytkownika */}
+          {categoryDropdownOpen && userCategories.length > 0 && (
             <div
               className="absolute left-0 mt-1 rounded shadow-lg border border-sidebar-border z-20"
               style={{
@@ -371,7 +389,7 @@ function UploadDocumentSection() {
                 overflowY: 'auto',
               }}
             >
-              {allCategories
+              {userCategories
                 .filter(cat => cat.toLowerCase().includes(categoryInput.toLowerCase()) || !categoryInput)
                 .map(cat => (
                   <button
@@ -442,35 +460,47 @@ function UploadDocumentSection() {
 
       <hr className="my-4" />
       {/* Preuploaded Documents pogrupowane po kategoriach */}
-      <div className="mb-6">
-        <div className="flex items-center mb-2">
-          {Object.keys(generalDocsByCategory).length > 0 && (
-            <input
-              type="checkbox"
-              ref={selectAllRef}
-              className="accent-sidebar-accent mr-2"
-              checked={
-                Object.values(generalDocsByCategory).flat().length > 0 &&
-                Object.values(generalDocsByCategory).flat().every(doc => selectedDocuments.includes(doc.id))
-              }
-              onChange={e => {
-                const allIds = Object.values(generalDocsByCategory).flat().map(doc => doc.id);
-                if (e.target.checked) {
-                  setSelectedDocuments(prev => Array.from(new Set([...prev, ...allIds])));
-                } else {
-                  setSelectedDocuments(prev => prev.filter(id => !allIds.includes(id)));
+        <div className="mb-6">
+          <div className="flex items-center mb-2">
+            {Object.keys(generalDocsByCategory).length > 0 && (
+              <input
+                type="checkbox"
+                ref={selectAllRef}
+                className="accent-sidebar-accent mr-2"
+                checked={
+                  Object.values(generalDocsByCategory).flat().length > 0 &&
+                  Object.values(generalDocsByCategory).flat().every(doc => selectedDocuments.includes(doc.id))
                 }
-              }}
-              disabled={Object.values(generalDocsByCategory).flat().length === 0}
-            />
-          )}
-          <h3 className="text-base font-semibold tracking-tight">Preuploaded documents</h3>
-        </div>
+                onChange={e => {
+                  const allIds = Object.values(generalDocsByCategory).flat().map(doc => doc.id);
+                  if (e.target.checked) {
+                    setSelectedDocuments(prev => Array.from(new Set([...prev, ...allIds])));
+                  } else {
+                    setSelectedDocuments(prev => prev.filter(id => !allIds.includes(id)));
+                  }
+                }}
+                disabled={Object.values(generalDocsByCategory).flat().length === 0}
+              />
+            )}
+            <h3 className="text-base font-semibold tracking-tight">Preuploaded documents</h3>
+            <button
+              type="button"
+              className="ml-2 p-1 rounded hover:bg-muted"
+              onClick={() => setCollapsedGeneral(v => !v)}
+              aria-label={collapsedGeneral ? "Expand section" : "Collapse section"}
+            >
+              {collapsedGeneral ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+              )}
+            </button>
+          </div>
         {docsLoading ? (
           <div className="text-muted-foreground text-sm">Ładowanie...</div>
         ) : docsError ? (
           <div className="bg-red-100 text-red-700 border border-red-200 rounded px-3 py-2 text-sm mb-2">{docsError}</div>
-        ) : (
+        ) : collapsedGeneral ? null : (
           Object.keys(generalDocsByCategory).length === 0 ? (
             <div className="text-muted-foreground text-sm">Brak dokumentów.</div>
           ) : (
@@ -494,28 +524,42 @@ function UploadDocumentSection() {
                     disabled={docs.length === 0}
                   />
                   <span className="font-semibold text-sidebar-foreground/80">{cat}</span>
+                  <button
+                    type="button"
+                    className="ml-2 p-1 rounded hover:bg-muted"
+                    onClick={() => setCollapsedFolders(f => ({ ...f, [cat]: !f[cat] }))}
+                    aria-label={collapsedFolders[cat] ? "Expand folder" : "Collapse folder"}
+                  >
+                    {collapsedFolders[cat] ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                    )}
+                  </button>
                 </div>
-                <div className="grid grid-cols-1 gap-2">
-                  {docs.map((doc: any) => (
-                    <div key={doc.id} className={`flex items-center justify-between bg-background border rounded-lg px-3 py-2 shadow-sm transition group ${selectedDocuments.includes(doc.id) ? 'border-sidebar-accent' : 'border-muted'}` }>
-                      <div className="flex items-center gap-2 truncate max-w-[180px]" title={doc.filename}>
-                        <input
-                          type="checkbox"
-                          checked={selectedDocuments.includes(doc.id)}
-                          onChange={e => {
-                            if (e.target.checked) {
-                              setSelectedDocuments(prev => [...prev, doc.id]);
-                            } else {
-                              setSelectedDocuments(prev => prev.filter(id => id !== doc.id));
-                            }
-                          }}
-                          className="accent-sidebar-accent"
-                        />
-                        <span className="font-medium truncate">{doc.filename}</span>
+                {collapsedFolders[cat] ? null : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {docs.map((doc: any) => (
+                      <div key={doc.id} className={`flex items-center justify-between bg-background border rounded-lg px-3 py-2 shadow-sm transition group ${selectedDocuments.includes(doc.id) ? 'border-sidebar-accent' : 'border-muted'}` }>
+                        <div className="flex items-center gap-2 truncate max-w-[180px]" title={doc.filename}>
+                          <input
+                            type="checkbox"
+                            checked={selectedDocuments.includes(doc.id)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedDocuments(prev => [...prev, doc.id]);
+                              } else {
+                                setSelectedDocuments(prev => prev.filter(id => id !== doc.id));
+                              }
+                            }}
+                            className="accent-sidebar-accent"
+                          />
+                          <span className="font-medium truncate">{doc.filename}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))
           )
@@ -544,18 +588,55 @@ function UploadDocumentSection() {
             />
           )}
           <h3 className="text-base font-semibold tracking-tight">Your documents</h3>
+          <button
+            type="button"
+            className="ml-2 p-1 rounded hover:bg-muted"
+            onClick={() => setCollapsedUser(v => !v)}
+            aria-label={collapsedUser ? "Expand section" : "Collapse section"}
+          >
+            {collapsedUser ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+            )}
+          </button>
         </div>
         {docsLoading ? (
           <div className="text-muted-foreground text-sm">Ładowanie...</div>
         ) : docsError ? (
           <div className="bg-red-100 text-red-700 border border-red-200 rounded px-3 py-2 text-sm mb-2">{docsError}</div>
-        ) : (
+        ) : collapsedUser ? null : (
           Object.keys(userDocsByCategory).length === 0 ? (
             <div className="text-muted-foreground text-sm">Brak dokumentów.</div>
           ) : (
             Object.entries(userDocsByCategory).map(([cat, docs]) => (
               <div key={cat} className="mb-4">
-                <div className="flex items-center gap-2 mb-2">
+                <div
+                  className={`flex items-center gap-2 mb-2 rounded transition-colors ${dragOverCat === cat ? 'bg-sidebar-accent/20' : ''}`}
+                  onDragOver={e => {
+                    e.preventDefault();
+                    setDragOverCat(cat);
+                  }}
+                  onDragLeave={e => setDragOverCat(null)}
+                  onDrop={async e => {
+                    e.preventDefault();
+                    setDragOverCat(null);
+                    if (draggedDoc && draggedDoc.category !== cat) {
+                      setChangeCategoryLoading(true);
+                      try {
+                        const apiClient = apiClientRef.current;
+                        if (!apiClient) throw new Error("API client initialization error.");
+                        await apiClient.changeDocumentCategory({ documentId: draggedDoc.id, newCategory: cat });
+                        setDraggedDoc(null);
+                        fetchDocuments();
+                      } catch (err: any) {
+                        setChangeCategoryError(err?.body?.message || err?.message || "Category change error.");
+                      } finally {
+                        setChangeCategoryLoading(false);
+                      }
+                    }
+                  }}
+                >
                   <input
                     type="checkbox"
                     className="accent-sidebar-accent"
@@ -573,83 +654,247 @@ function UploadDocumentSection() {
                     disabled={docs.length === 0}
                   />
                   <span className="font-semibold text-sidebar-foreground/80">{cat}</span>
-                </div>
-                <div className="grid grid-cols-1 gap-2">
-                  {docs.map((doc: any) => (
-                    <div key={doc.id} className={`flex items-center justify-between bg-background border rounded-lg px-3 py-2 shadow-sm transition group ${selectedDocuments.includes(doc.id) ? 'border-sidebar-accent' : 'border-muted'}` }>
-                      <div className="flex items-center gap-2 truncate" title={doc.filename}>
-                        <input
-                          type="checkbox"
-                          checked={selectedDocuments.includes(doc.id)}
-                          onChange={e => {
-                            if (e.target.checked) {
-                              setSelectedDocuments(prev => [...prev, doc.id]);
-                            } else {
-                              setSelectedDocuments(prev => prev.filter(id => id !== doc.id));
-                            }
-                          }}
-                          className="accent-sidebar-accent"
-                        />
-                        <span className="font-medium truncate">{doc.filename}</span>
-                      </div>
-                      <div className="relative flex items-center">
-                        <button
-                          type="button"
-                          className="p-1 rounded hover:bg-sidebar-accent/20 focus:outline-none min-h-0"
-                          onClick={() => setMenuOpenId(menuOpenId === doc.id ? null : doc.id)}
-                          aria-label="Open document menu"
-                        >
-                          <svg className="size-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>
-                        </button>
-                        {menuOpenId === doc.id && (
-                          <div
-                            ref={menuRef}
-                            className="absolute right-0 mt-2 w-28 bg-popover border border-sidebar-border rounded shadow-lg z-50"
-                          >
-                            <button
-                              type="button"
-                              className="block w-full text-left px-3 py-2 text-xs hover:bg-red-100 dark:hover:bg-red-900 text-red-600 rounded"
-                              onClick={() => {
-                                setMenuOpenId(null);
-                                setConfirmDeleteDoc(doc);
-                              }}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {/* Confirmation popup for deleting document */}
-                  {confirmDeleteDoc && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                      <div className="bg-white dark:bg-sidebar p-6 rounded shadow-lg max-w-sm w-full">
-                          <h3 className="text-lg font-bold mb-2 text-red-600">Confirm document deletion</h3>
-                          <p className="mb-4 text-sm">Are you sure you want to delete the document <span className='font-semibold'>{confirmDeleteDoc.filename}</span>? This operation cannot be undone.</p>
-                        {docsError && <div className="text-red-500 text-sm mb-2">{docsError}</div>}
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            type="button"
-                            className="px-4 py-2 rounded bg-muted text-sidebar-foreground"
-                            onClick={() => setConfirmDeleteDoc(null)}
-                            disabled={docsLoading}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            className="px-4 py-2 rounded bg-red-600 text-white font-semibold disabled:opacity-60"
-                            onClick={() => handleDelete(confirmDeleteDoc)}
-                            disabled={docsLoading}
-                          >
-                              {docsLoading ? "Deleting..." : "Delete forever"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                  <button
+                    type="button"
+                    className="ml-2 p-1 rounded hover:bg-muted"
+                    onClick={() => setCollapsedFolders(f => ({ ...f, [cat]: !f[cat] }))}
+                    aria-label={collapsedFolders[cat] ? "Expand folder" : "Collapse folder"}
+                  >
+                    {collapsedFolders[cat] ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                    )}
+                  </button>
+                  {dragOverCat === cat && draggedDoc && (
+                    <span className="ml-2 text-xs text-sidebar-accent">Drop to move here</span>
                   )}
                 </div>
+                {collapsedFolders[cat] ? null : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {docs.map((doc: any) => (
+                      <div
+                        key={doc.id}
+                        className={`flex items-center justify-between bg-background border rounded-lg px-3 py-2 shadow-sm transition group ${selectedDocuments.includes(doc.id) ? 'border-sidebar-accent' : 'border-muted'}`}
+                        draggable
+                        onDragStart={e => {
+                          setDraggedDoc(doc);
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                        onDragEnd={() => setDraggedDoc(null)}
+                      >
+                        <div className="flex items-center gap-2 truncate" title={doc.filename}>
+                          <input
+                            type="checkbox"
+                            checked={selectedDocuments.includes(doc.id)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedDocuments(prev => [...prev, doc.id]);
+                              } else {
+                                setSelectedDocuments(prev => prev.filter(id => id !== doc.id));
+                              }
+                            }}
+                            className="accent-sidebar-accent"
+                          />
+                          <span className="font-medium truncate">{doc.filename}</span>
+                        </div>
+                        <div className="relative flex items-center">
+                          <button
+                            type="button"
+                            className="p-1 rounded hover:bg-sidebar-accent/20 focus:outline-none min-h-0"
+                            onClick={() => setMenuOpenId(menuOpenId === doc.id ? null : doc.id)}
+                            aria-label="Open document menu"
+                          >
+                            <svg className="size-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>
+                          </button>
+                          {menuOpenId === doc.id && (
+                            <div
+                              ref={menuRef}
+                              className="absolute right-0 mt-2 w-36 bg-popover border border-sidebar-border rounded shadow-lg z-50"
+                            >
+                              <button
+                                type="button"
+                                className="block w-full text-left px-3 py-2 text-xs hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 rounded"
+                                onClick={() => {
+                                  setMenuOpenId(null);
+                                  setChangeCategoryDoc(doc);
+                                  setChangeCategoryInput(""); // input is empty by default
+                                  setChangeCategoryIsCustom(false);
+                                }}
+                              >
+                                Change folder
+                              </button>
+                              <button
+                                type="button"
+                                className="block w-full text-left px-3 py-2 text-xs hover:bg-red-100 dark:hover:bg-red-900 text-red-600 rounded"
+                                onClick={() => {
+                                  setMenuOpenId(null);
+                                  setConfirmDeleteDoc(doc);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Confirmation popup for deleting document */}
+                {confirmDeleteDoc && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white dark:bg-sidebar p-6 rounded shadow-lg max-w-sm w-full">
+                        <h3 className="text-lg font-bold mb-2 text-red-600">Confirm document deletion</h3>
+                        <p className="mb-4 text-sm">Are you sure you want to delete the document <span className='font-semibold'>{confirmDeleteDoc.filename}</span>? This operation cannot be undone.</p>
+                      {docsError && <div className="text-red-500 text-sm mb-2">{docsError}</div>}
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          type="button"
+                          className="px-4 py-2 rounded bg-muted text-sidebar-foreground"
+                          onClick={() => setConfirmDeleteDoc(null)}
+                          disabled={docsLoading}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          className="px-4 py-2 rounded bg-red-600 text-white font-semibold disabled:opacity-60"
+                          onClick={() => handleDelete(confirmDeleteDoc)}
+                          disabled={docsLoading}
+                        >
+                            {docsLoading ? "Deleting..." : "Delete forever"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* Change category dialog */}
+                {changeCategoryDoc && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white dark:bg-sidebar p-4 rounded shadow-lg max-w-sm w-full  m-[10px]">
+                      <h3 className="text-lg font-bold mb-2 text-blue-600">Change document folder</h3>
+                      <p className="mb-4 text-sm">Select or enter a new folder for <span className='font-semibold'>{changeCategoryDoc.filename}</span>.</p>
+                      <div className="mb-4 w-full">
+                        <label htmlFor="change-category-input" className="block text-sm font-medium mb-2">Folder</label>
+                        <div className="relative w-full">
+                          <input
+                            id="change-category-input"
+                            ref={changeCategoryInputRef}
+                            type="text"
+                            className="w-full px-3 py-2 border rounded bg-background text-sidebar-foreground"
+                            placeholder="Select or enter folder"
+                            value={changeCategoryInput}
+                            onChange={e => {
+                              setChangeCategoryInput(e.target.value);
+                              setChangeCategoryIsCustom(!allCategories.includes(e.target.value));
+                              setChangeCategoryDropdownOpen(true);
+                            }}
+                            onFocus={() => setChangeCategoryDropdownOpen(true)}
+                            onBlur={() => setTimeout(() => setChangeCategoryDropdownOpen(false), 120)}
+                            autoComplete="off"
+                          />
+                          {/* Dropdown z kategoriami użytkownika */}
+                          {changeCategoryDropdownOpen && userCategories.length > 0 && (
+                            <div
+                              className="absolute left-0 mt-1 rounded shadow-lg border border-sidebar-border z-20"
+                              style={{
+                                background: "#374151",
+                                minWidth: changeCategoryInputRef.current?.offsetWidth || '100%',
+                                width: changeCategoryInputRef.current?.offsetWidth || '100%',
+                                maxHeight: 180,
+                                overflowY: 'auto',
+                              }}
+                            >
+                              {userCategories
+                                .filter(cat => cat.toLowerCase().includes(changeCategoryInput.toLowerCase()) || !changeCategoryInput)
+                                .map(cat => (
+                                  <button
+                                    key={cat}
+                                    type="button"
+                                    className="block w-full text-left px-3 py-2 text-sm text-white"
+                                    style={{ background: '#374151' }}
+                                    onMouseEnter={e => {
+                                      (e.currentTarget as HTMLButtonElement).style.background = '#1f2937';
+                                    }}
+                                    onMouseLeave={e => {
+                                      (e.currentTarget as HTMLButtonElement).style.background = '#374151';
+                                    }}
+                                    onMouseDown={e => {
+                                      e.preventDefault();
+                                      setChangeCategoryInput(cat);
+                                      setChangeCategoryIsCustom(false);
+                                      setChangeCategoryDropdownOpen(false);
+                                    }}
+                                  >
+                                    {cat}
+                                  </button>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                        {changeCategoryIsCustom && changeCategoryInput.trim() && (
+                          <div className="mt-1 text-xs text-muted-foreground">New category: <span className="font-semibold">{changeCategoryInput.trim()}</span></div>
+                        )}
+                      </div>
+                      {changeCategoryError && (
+                        <div className="bg-red-100 text-red-700 border border-red-200 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
+                          <span>{changeCategoryError}</span>
+                          <button
+                            className="ml-2 text-red-400 hover:text-red-700 text-lg font-bold px-1 rounded focus:outline-none"
+                            onClick={() => setChangeCategoryError(null)}
+                            aria-label="Dismiss error"
+                            type="button"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          type="button"
+                          className="px-4 py-2 rounded bg-muted text-sidebar-foreground"
+                          onClick={() => {
+                            setChangeCategoryDoc(null);
+                            setChangeCategoryInput("");
+                            setChangeCategoryError(null);
+                          }}
+                          disabled={changeCategoryLoading}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          className="px-4 py-2 rounded bg-blue-600 text-white font-semibold disabled:opacity-60"
+                          onClick={async () => {
+                            setChangeCategoryError(null);
+                            if (!changeCategoryInput.trim()) {
+                              setChangeCategoryError("Select or enter a category.");
+                              return;
+                            }
+                            setChangeCategoryLoading(true);
+                            try {
+                              const apiClient = apiClientRef.current;
+                              if (!apiClient) throw new Error("API client initialization error.");
+                              await apiClient.changeDocumentCategory({ documentId: changeCategoryDoc.id, newCategory: changeCategoryInput.trim() });
+                              setChangeCategoryDoc(null);
+                              setChangeCategoryInput("");
+                              setChangeCategoryError(null);
+                              fetchDocuments();
+                            } catch (err: any) {
+                              setChangeCategoryError(err?.body?.message || err?.message || "Category change error.");
+                            } finally {
+                              setChangeCategoryLoading(false);
+                            }
+                          }}
+                          disabled={changeCategoryLoading}
+                        >
+                          {changeCategoryLoading ? "Changing..." : "Change category"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))
           )
