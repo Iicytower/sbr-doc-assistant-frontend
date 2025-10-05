@@ -50,27 +50,31 @@ export default function RightSidebar() {
           </div>
         ) : null}
         {activeTab === "settings" ? (
-            <div>
-              <h2 className="text-lg font-semibold mb-4">Change password</h2>
-              <ChangePasswordForm />
-              <hr className="my-6" />
-              <DeleteAccountSection />
-              <hr className="my-6" />
-              <ThemeSwitcher />
-              <button
-                className="w-full mt-8 bg-sidebar-accent text-sidebar-accent-foreground py-2 rounded font-semibold disabled:opacity-60"
-                onClick={() => {
-                  // TODO should use apiClient.logout()
-                  localStorage.removeItem('backend_client_token');
-                  localStorage.removeItem('lastSelectedChatId');
-                  document.cookie = "backend_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  window.location.href = "/";
-                }}
-                type="button"
-              >
-                Logout
-              </button>
-            </div>
+          <div>
+            {/* ThemeSwitcher at the top */}
+            <ThemeSwitcher />
+            <hr className="my-6" />
+            {/* Change password in the middle */}
+            <h2 className="text-lg font-semibold mb-4">Change password</h2>
+            <ChangePasswordForm />
+            <hr className="my-6" />
+            {/* Delete account at the bottom */}
+            <DeleteAccountSection />
+            <hr className="my-6" />
+            <button
+              className="w-full mt-8 bg-sidebar-accent text-sidebar-accent-foreground py-2 rounded font-semibold disabled:opacity-60"
+              onClick={() => {
+                // TODO should use apiClient.logout()
+                localStorage.removeItem('backend_client_token');
+                localStorage.removeItem('lastSelectedChatId');
+                document.cookie = "backend_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                window.location.href = "/";
+              }}
+              type="button"
+            >
+              Logout
+            </button>
+          </div>
         ) : null}
       </div>
     </aside>
@@ -325,14 +329,15 @@ function UploadDocumentSection() {
         style={{ minHeight: 120 }}
       >
         <label htmlFor="file-upload" className="flex flex-col items-center cursor-pointer w-full">
-          <svg className="size-10 text-sidebar-accent mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+          <svg className="size-10 text-sidebar-foreground/50 mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
           </svg>
-          <span className="text-sm font-medium text-sidebar-foreground/80">Drag & drop PDF/Markdown here<br/>or <span className="underline text-sidebar-accent">click to select</span></span>
+          <span className="text-sm font-medium text-sidebar-foreground/100">Drag & drop here<br/>or <span className="underline text-sidebar-foreground/50">click to select</span></span>
+            <span className="text-xs text-sidebar-foreground/20">Allowed: csv, docx, md, ods, odt, pdf, txt, xlsx</span>
           <input
             id="file-upload"
             type="file"
-            accept=".pdf,.md,.json,application/pdf,text/markdown,application/json"
+            accept=".csv,.docx,.md,.ods,.odt,.pdf,.txt,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.oasis.opendocument.spreadsheet,application/vnd.oasis.opendocument.text,text/markdown,text/plain,text/csv"
             className="hidden"
             onChange={e => {
               if (e.target.files?.[0]) {
