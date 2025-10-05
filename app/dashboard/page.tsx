@@ -2,6 +2,8 @@ import { cookies } from 'next/headers';
 import { Chat } from '@/components/chat';
 import { DataStreamHandler } from '@/components/data-stream-handler';
 
+import ResetLastChatId from '@/components/reset-last-chat-id';
+
 import { redirect } from 'next/navigation';
 import ApiClient from '@/backend/backend';
 
@@ -20,13 +22,14 @@ export default async function Page() {
   }
 
   return (
-    <>
-      <Chat
-        isReadonly={false}
-        autoResume={false}
-        disableSuggestedActions={true}
-      />
-      <DataStreamHandler />
-    </>
+      <>
+        <ResetLastChatId />
+        <Chat
+          isReadonly={false}
+          autoResume={false}
+          disableSuggestedActions={true}
+        />
+        <DataStreamHandler />
+      </>
   );
 }
