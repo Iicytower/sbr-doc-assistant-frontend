@@ -39,7 +39,7 @@ const PureChatItem = ({
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton isActive={isActive} onClick={onClick}>
+      <SidebarMenuButton isActive={isActive} onClick={onClick} className={isActive ? 'bg-muted font-semibold text-muted-foreground' : 'hover:bg-muted text-muted-foreground'}>
         <span>{chat.title}</span>
       </SidebarMenuButton>
 

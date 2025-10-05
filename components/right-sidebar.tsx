@@ -30,14 +30,14 @@ export default function RightSidebar() {
       <div className="flex border-b border-sidebar-border relative">
         <button
           type="button"
-          className={`flex-1 py-3 px-4 text-sm font-medium transition-colors rounded-tl-md ${activeTab === "documents" ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:bg-muted"}`}
+          className={`flex-1 py-3 px-4 text-sm font-medium transition-colors rounded-tl-md ${activeTab === "documents" ? "bg-blue-600 text-white" : "text-blue-600 hover:bg-blue-100"}`}
           onClick={() => setActiveTab("documents")}
         >
           Documents
         </button>
         <button
           type="button"
-          className={`flex-1 py-3 px-4 text-sm font-medium transition-colors rounded-tr-md ${activeTab === "settings" ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:bg-muted"}`}
+          className={`flex-1 py-3 px-4 text-sm font-medium transition-colors rounded-tr-md ${activeTab === "settings" ? "bg-blue-600 text-white" : "text-blue-600 hover:bg-blue-100"}`}
           onClick={() => setActiveTab("settings")}
         >
           Settings
@@ -85,22 +85,22 @@ function ThemeSwitcher() {
   const { theme, setTheme, systemTheme } = useTheme();
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium mb-2">Theme</label>
+  <label className="block text-sm font-medium mb-2 text-blue-600">Theme</label>
       <div className="flex gap-2">
         <button
-          className={`px-3 py-1 rounded ${theme === 'light' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'bg-muted text-sidebar-foreground'}`}
+          className={`px-3 py-1 rounded transition-colors ${theme === 'light' ? 'bg-muted text-foreground' : 'hover:bg-muted text-muted-foreground'}`}
           onClick={() => setTheme('light')}
         >
           Light
         </button>
         <button
-          className={`px-3 py-1 rounded ${theme === 'dark' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'bg-muted text-sidebar-foreground'}`}
+          className={`px-3 py-1 rounded transition-colors ${theme === 'dark' ? 'bg-muted text-foreground' : 'hover:bg-muted text-muted-foreground'}`}
           onClick={() => setTheme('dark')}
         >
           Dark
         </button>
         <button
-          className={`px-3 py-1 rounded ${theme === 'system' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'bg-muted text-sidebar-foreground'}`}
+          className={`px-3 py-1 rounded transition-colors ${theme === 'system' ? 'bg-muted text-foreground' : 'hover:bg-muted text-muted-foreground'}`}
           onClick={() => setTheme('system')}
         >
           System
@@ -430,17 +430,17 @@ function UploadDocumentSection() {
 
       <button
         type="button"
-        className="w-full bg-sidebar-accent text-sidebar-accent-foreground py-2 rounded font-semibold disabled:opacity-60 mb-2"
+        className="w-full bg-blue-600 text-white py-2 rounded font-semibold disabled:opacity-60 mb-2 transition-colors hover:bg-blue-700"
         onClick={handleUpload}
         disabled={loading || !file}
       >
         {loading ? "Sending..." : "Upload Document"}
       </button>
       {error && (
-        <div className="bg-red-100 text-red-700 border border-red-200 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
+        <div className="bg-blue-100 text-blue-600 border border-blue-600 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
           <span>{error}</span>
           <button
-            className="ml-2 text-red-400 hover:text-red-700 text-lg font-bold px-1 rounded focus:outline-none"
+            className="ml-2 text-blue-600 hover:text-blue-700 text-lg font-bold px-1 rounded focus:outline-none"
             onClick={() => setError(null)}
             aria-label="Dismiss error"
             type="button"
@@ -450,10 +450,10 @@ function UploadDocumentSection() {
         </div>
       )}
       {success && (
-        <div className="bg-green-100 text-green-700 border border-green-200 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
+        <div className="bg-blue-100 text-blue-700 border border-blue-600 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
           <span>{success}</span>
           <button
-            className="ml-2 text-green-400 hover:text-green-700 text-lg font-bold px-1 rounded focus:outline-none"
+            className="ml-2 text-blue-700 hover:text-blue-900 text-lg font-bold px-1 rounded focus:outline-none"
             onClick={() => setSuccess(null)}
             aria-label="Dismiss success"
             type="button"

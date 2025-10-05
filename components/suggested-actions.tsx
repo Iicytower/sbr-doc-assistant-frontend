@@ -26,7 +26,7 @@ function PureSuggestedActions({
   ];
 
   return (
-    <div data-testid="suggested-actions" className="grid sm:grid-cols-2 gap-2 w-full ">
+  <div data-testid="suggested-actions" className="grid sm:grid-cols-2 gap-2 w-full ">
         {suggestedActions.map((suggestedAction, index) => (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -38,13 +38,12 @@ function PureSuggestedActions({
             <Suggestion
               suggestion={suggestedAction}
               onClick={(suggestion) => {
-                // Usunięto window.history.replaceState, nie będzie przekierowania
                 sendMessage({
                   role: 'user',
                   parts: [{ type: 'text', text: suggestion }],
                 });
               }}
-              className="text-left w-full h-auto whitespace-normal p-3"
+              className="text-left w-full h-auto whitespace-normal p-3 bg-blue-100 text-blue-700 border border-blue-600 hover:bg-blue-200"
             >
               {suggestedAction}
             </Suggestion>

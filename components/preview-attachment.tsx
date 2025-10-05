@@ -19,7 +19,7 @@ export const PreviewAttachment = ({
   const { name, url, contentType } = attachment;
 
   return (
-    <div data-testid="input-attachment-preview" className="group relative size-16 rounded-lg overflow-hidden bg-muted border">
+    <div data-testid="input-attachment-preview" className="group relative size-16 rounded-lg overflow-hidden bg-blue-100 border border-blue-600">
       {contentType?.startsWith('image') ? (
         <NextImage
           src={url}
@@ -52,7 +52,7 @@ export const PreviewAttachment = ({
         </Button>
       )}
 
-      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent text-white text-[10px] px-1 py-0.5 truncate">
+      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-blue-600/80 to-transparent text-white text-[10px] px-1 py-0.5 truncate">
         {name}
       </div>
     </div>

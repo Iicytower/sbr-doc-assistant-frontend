@@ -107,8 +107,8 @@ export default function HomePage() {
             </button>
           </AuthForm>
         )}
-        {error && <div className="mt-4 text-red-600 text-center">{error}</div>}
-        {success && <div className="mt-4 text-green-600 text-center">{success}</div>}
+  {error && <div className="mt-4 text-blue-600 text-center">{error}</div>}
+  {success && <div className="mt-4 text-blue-700 text-center">{success}</div>}
       </div>
     </main>
   );

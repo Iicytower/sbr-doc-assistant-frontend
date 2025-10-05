@@ -215,9 +215,9 @@ const PureDocumentHeader = ({
   kind: ArtifactKind;
   isStreaming: boolean;
 }) => (
-  <div className="p-4 border rounded-t-2xl flex flex-row gap-2 items-start sm:items-center justify-between dark:bg-muted border-b-0 dark:border-zinc-700">
+  <div className="p-4 border border-blue-600 rounded-t-2xl flex flex-row gap-2 items-start sm:items-center justify-between bg-blue-50 border-b-0">
     <div className="flex flex-row items-start sm:items-center gap-3">
-      <div className="text-muted-foreground">
+      <div className="text-blue-600">
         {isStreaming ? (
           <div className="animate-spin">
             <LoaderIcon />
@@ -228,7 +228,7 @@ const PureDocumentHeader = ({
           <FileIcon />
         )}
       </div>
-      <div className="-translate-y-1 sm:translate-y-0 font-medium">{title}</div>
+      <div className="-translate-y-1 sm:translate-y-0 font-medium text-blue-700">{title}</div>
     </div>
     <div className="w-8" />
   </div>
