@@ -120,7 +120,8 @@ function UploadDocumentSection() {
   // Drag-and-drop for category change (Your documents only)
   const [draggedDoc, setDraggedDoc] = useState<any | null>(null);
   const [dragOverCat, setDragOverCat] = useState<string | null>(null);
-  const [file, setFile] = useState<File | null>(null);
+  // Obsługa wielu plików
+  const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -253,11 +254,12 @@ function UploadDocumentSection() {
   };
 
   // Handle upload in the next step
+  // Upload wielu plików po kolei
   const handleUpload = async () => {
     setError(null);
     setSuccess(null);
-    if (!file) {
-      setError("Select a file to upload.");
+    if (!files.length) {
+      setError("Select at least one file to upload.");
       return;
     }
     if (!categoryInput.trim()) {
@@ -265,20 +267,31 @@ function UploadDocumentSection() {
       return;
     }
     setLoading(true);
-    try {
-      const apiClient = apiClientRef.current;
-      if (!apiClient) throw new Error("API client initialization error.");
-      await apiClient.addDocument({ category: categoryInput.trim(), files: [file] });
-      setSuccess("File has been uploaded.");
-      setFile(null);
-      setCategoryInput("");
-      setIsCustomCategory(false);
-      fetchDocuments();
-    } catch (err: any) {
-      setError(err?.body?.message || err?.message || "File upload error.");
-    } finally {
-      setLoading(false);
+    let successCount = 0;
+    let errorCount = 0;
+    for (const file of files) {
+      try {
+        const apiClient = apiClientRef.current;
+        if (!apiClient) throw new Error("API client initialization error.");
+        await apiClient.addDocument({ category: categoryInput.trim(), files: [file] });
+        successCount++;
+      } catch (err: any) {
+        errorCount++;
+      }
     }
+    if (successCount && !errorCount) {
+      setSuccess(successCount === 1 ? "File has been uploaded." : `${successCount} files have been uploaded.`);
+    } else if (successCount && errorCount) {
+      setSuccess(`${successCount} files uploaded, ${errorCount} failed.`);
+      setError("Some files failed to upload.");
+    } else {
+      setError("File upload error.");
+    }
+    setFiles([]);
+    setCategoryInput("");
+    setIsCustomCategory(false);
+    fetchDocuments();
+    setLoading(false);
   };
 
   const handleDelete = async (doc: any) => {
@@ -311,8 +324,11 @@ function UploadDocumentSection() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files?.[0]) {
-      setFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setFiles(prev => {
+        const newFiles = Array.from(e.dataTransfer.files ?? []).filter(f => !prev.some(pf => pf.name === f.name && pf.size === f.size));
+        return [...prev, ...newFiles];
+      });
     }
   };
 
@@ -333,31 +349,39 @@ function UploadDocumentSection() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
           </svg>
           <span className="text-sm font-medium text-sidebar-foreground/100">Drag & drop here<br/>or <span className="underline text-sidebar-foreground/50">click to select</span></span>
-            <span className="text-xs text-sidebar-foreground/20">Allowed: csv, docx, md, ods, odt, pdf, txt, xlsx</span>
+          <span className="text-xs text-sidebar-foreground/20">Allowed: csv, docx, md, ods, odt, pdf, txt, xlsx</span>
           <input
             id="file-upload"
             type="file"
             accept=".csv,.docx,.md,.ods,.odt,.pdf,.txt,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.oasis.opendocument.spreadsheet,application/vnd.oasis.opendocument.text,text/markdown,text/plain,text/csv"
             className="hidden"
+            multiple
             onChange={e => {
-              if (e.target.files?.[0]) {
-                setFile(e.target.files[0]);
+              if (e.target.files && e.target.files.length > 0) {
+                setFiles(prev => {
+                  const newFiles = Array.from(e.target.files ?? []).filter(f => !prev.some(pf => pf.name === f.name && pf.size === f.size));
+                  return [...prev, ...newFiles];
+                });
               } else {
-                setFile(null);
+                setFiles([]);
               }
             }}
             value={''}
           />
         </label>
-        {file && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background px-3 py-1 rounded shadow border mt-2">
-            <span className="text-xs font-medium truncate max-w-[120px]" title={file.name}>{file.name}</span>
-            <button
-              className="text-red-500 hover:text-red-700 text-xs font-bold px-1"
-              onClick={() => setFile(null)}
-              type="button"
-              aria-label="Remove file"
-            >✕</button>
+        {files.length > 0 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-wrap items-center gap-2 bg-background px-3 py-1 rounded shadow border mt-2 max-w-full">
+            {files.map((file, idx) => (
+              <div key={file.name + file.size + idx} className="flex items-center gap-1 bg-muted px-2 py-1 rounded mb-1">
+                <span className="text-xs font-medium truncate max-w-[90px]" title={file.name}>{file.name}</span>
+                <button
+                  className="text-red-500 hover:text-red-700 text-xs font-bold px-1"
+                  onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
+                  type="button"
+                  aria-label="Remove file"
+                >✕</button>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -432,9 +456,9 @@ function UploadDocumentSection() {
         type="button"
         className="w-full bg-blue-600 text-white py-2 rounded font-semibold disabled:opacity-60 mb-2 transition-colors hover:bg-blue-700"
         onClick={handleUpload}
-        disabled={loading || !file}
+        disabled={loading || files.length === 0}
       >
-        {loading ? "Sending..." : "Upload Document"}
+        {loading ? "Sending..." : files.length === 1 ? "Upload Document" : `Upload ${files.length} Documents`}
       </button>
       {error && (
         <div className="bg-blue-100 text-blue-600 border border-blue-600 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
