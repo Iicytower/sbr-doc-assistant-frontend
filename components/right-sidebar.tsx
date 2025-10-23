@@ -111,7 +111,32 @@ function ThemeSwitcher() {
   );
 }
 function UploadDocumentSection() {
-  // Collapsed state for folders and main sections
+  // Allowed MIME types and extensions
+  const ALLOWED_MIME_TYPES = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+    'text/csv',
+    'text/html',
+    'text/markdown',
+    'application/json',
+    'application/vnd.oasis.opendocument.text',
+    'application/vnd.oasis.opendocument.spreadsheet',
+    'application/vnd.oasis.opendocument.presentation',
+    'application/epub+zip',
+    'image/png',
+    'image/jpeg',
+    'image/tiff',
+    'image/bmp',
+  ];
+  const ALLOWED_EXTENSIONS = [
+    '.pdf', '.docx', '.xlsx', '.pptx', '.txt', '.csv', '.html', '.md', '.json', '.odt', '.ods', '.odp', '.epub', '.png', '.jpg', '.jpeg', '.tiff', '.bmp'
+  ];
+  const ALLOWED_LABELS = [
+    'PDF', 'DOCX', 'XLSX', 'PPTX', 'TXT', 'CSV', 'HTML', 'MARKDOWN', 'JSON', 'ODT', 'ODS', 'ODP', 'EPUB', 'PNG', 'JPG', 'JPEG', 'TIFF', 'BMP'
+  ];
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
   const [collapsedGeneral, setCollapsedGeneral] = useState(false);
   const [collapsedUser, setCollapsedUser] = useState(false);
@@ -266,6 +291,12 @@ function UploadDocumentSection() {
       setError("Select or enter a category.");
       return;
     }
+    // MIME type validation
+    const unsupported = files.filter(f => !ALLOWED_MIME_TYPES.includes(f.type));
+    if (unsupported.length > 0) {
+      setError("Not supported mimetype");
+      return;
+    }
     setLoading(true);
     let successCount = 0;
     let errorCount = 0;
@@ -349,11 +380,11 @@ function UploadDocumentSection() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
           </svg>
           <span className="text-sm font-medium text-sidebar-foreground/100">Drag & drop here<br/>or <span className="underline text-sidebar-foreground/50">click to select</span></span>
-          <span className="text-xs text-sidebar-foreground/20">Allowed: csv, docx, md, ods, odt, pdf, txt, xlsx</span>
+          <span className="text-xs text-sidebar-foreground/20">Allowed: {ALLOWED_LABELS.join(', ')}</span>
           <input
             id="file-upload"
             type="file"
-            accept=".csv,.docx,.md,.ods,.odt,.pdf,.txt,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.oasis.opendocument.spreadsheet,application/vnd.oasis.opendocument.text,text/markdown,text/plain,text/csv"
+            accept={[...ALLOWED_EXTENSIONS, ...ALLOWED_MIME_TYPES].join(',')}
             className="hidden"
             multiple
             onChange={e => {
@@ -461,10 +492,10 @@ function UploadDocumentSection() {
         {loading ? "Sending..." : files.length === 1 ? "Upload Document" : `Upload ${files.length} Documents`}
       </button>
       {error && (
-        <div className="bg-blue-100 text-blue-600 border border-blue-600 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
+        <div className="bg-red-100 text-red-700 border border-red-600 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
           <span>{error}</span>
           <button
-            className="ml-2 text-blue-600 hover:text-blue-700 text-lg font-bold px-1 rounded focus:outline-none"
+            className="ml-2 text-red-700 hover:text-red-900 text-lg font-bold px-1 rounded focus:outline-none"
             onClick={() => setError(null)}
             aria-label="Dismiss error"
             type="button"
@@ -474,10 +505,10 @@ function UploadDocumentSection() {
         </div>
       )}
       {success && (
-        <div className="bg-blue-100 text-blue-700 border border-blue-600 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
+        <div className="bg-green-100 text-green-700 border border-green-600 rounded px-3 py-2 text-sm mb-2 flex items-center justify-between">
           <span>{success}</span>
           <button
-            className="ml-2 text-blue-700 hover:text-blue-900 text-lg font-bold px-1 rounded focus:outline-none"
+            className="ml-2 text-green-700 hover:text-green-900 text-lg font-bold px-1 rounded focus:outline-none"
             onClick={() => setSuccess(null)}
             aria-label="Dismiss success"
             type="button"
