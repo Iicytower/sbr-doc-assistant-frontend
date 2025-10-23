@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import { memo, useState } from 'react';
-import type { Vote } from '@/lib/db/schema';
+// import type { Vote } from '@/lib/db/schema';
 import { DocumentToolResult } from './document';
 import { SparklesIcon } from './icons';
 import { Response } from './elements/response';
@@ -25,6 +25,11 @@ import type { UseChatHelpers } from '@ai-sdk/react';
 import type { ChatMessage } from '@/lib/types';
 import { useDataStream } from './data-stream-provider';
 
+// Helper to ensure kind is one of allowed values
+function asArtifactKind(kind: any): "code" | "text" | "image" | "sheet" {
+  return ["code", "text", "image", "sheet"].includes(kind) ? kind : "text";
+}
+
 const PurePreviewMessage = ({
   chatId,
   message,
@@ -38,7 +43,7 @@ const PurePreviewMessage = ({
 }: {
   chatId: string;
   message: ChatMessage;
-  vote: Vote | undefined;
+  vote: undefined;
   isLoading: boolean;
   setMessages: UseChatHelpers<ChatMessage>['setMessages'];
   regenerate: UseChatHelpers<ChatMessage>['regenerate'];
@@ -129,7 +134,7 @@ const PurePreviewMessage = ({
                     <MessageContent
                       data-testid="message-content"
                       className={cn({
-                        'rounded-2xl px-3 py-2 break-words text-white text-right w-fit':
+                        'rounded-2xl px-3 py-2 break-words text-white w-fit text-left':
                           message.role === 'user',
                         'bg-transparent px-0 py-0 text-left':
                           message.role === 'assistant',
@@ -256,7 +261,10 @@ const PurePreviewMessage = ({
                           ) : (
                             <DocumentToolResult
                               type="request-suggestions"
-                              result={part.output}
+                              result={{
+                                ...part.output,
+                                kind: asArtifactKind(part.output.kind),
+                              }}
                               isReadonly={isReadonly}
                             />
                           )
@@ -317,7 +325,7 @@ export const ThinkingMessage = () => {
         </div>
 
         <div className="flex flex-col gap-2 w-full md:gap-4">
-          <div className="px-0 py-0 text-sm text-muted-foreground">
+          <div className="p-0 text-sm text-muted-foreground">
             <LoadingText>Thinking...</LoadingText>
           </div>
         </div>

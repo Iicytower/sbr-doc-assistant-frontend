@@ -17,7 +17,6 @@ import { useLocalStorage, useWindowSize } from 'usehooks-ts';
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
 import { PreviewAttachment } from './preview-attachment';
 import { Button } from './ui/button';
-import { SuggestedActions } from './suggested-actions';
 import {
   PromptInput,
   PromptInputTextarea,
@@ -28,16 +27,15 @@ import {
   PromptInputModelSelectTrigger,
   PromptInputModelSelectContent,
 } from './elements/prompt-input';
-import { SelectItem, SelectValue } from '@/components/ui/select';
+import { SelectItem, } from '@/components/ui/select';
 import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
-import type { VisibilityType } from './visibility-selector';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { chatModels } from '@/lib/ai/models';
-import { saveChatModelAsCookie } from '@/app/(chat)/actions';
+import { saveChatModelAsCookie } from '@/app/dashboard/actions';
 import { startTransition } from 'react';
 
 function PureMultimodalInput({
@@ -52,8 +50,9 @@ function PureMultimodalInput({
   setMessages,
   sendMessage,
   className,
-  selectedVisibilityType,
+
   selectedModelId,
+  disableSuggestedActions = false,
 }: {
   chatId: string;
   input: string;
@@ -66,8 +65,9 @@ function PureMultimodalInput({
   setMessages: UseChatHelpers<ChatMessage>['setMessages'];
   sendMessage: UseChatHelpers<ChatMessage>['sendMessage'];
   className?: string;
-  selectedVisibilityType: VisibilityType;
+
   selectedModelId: string;
+  disableSuggestedActions?: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -118,9 +118,14 @@ function PureMultimodalInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
-  const submitForm = useCallback(() => {
-    window.history.replaceState({}, '', `/chat/${chatId}`);
+  // Sprawdź, czy ostatnia wiadomość to user
+  const isLastMessageFromUser = messages.length > 0 && messages[messages.length - 1].role === 'user';
 
+  const submitForm = useCallback(() => {
+    if (isLastMessageFromUser) {
+      toast.error('Please wait for the model to finish its response!');
+      return;
+    }
     sendMessage({
       role: 'user',
       parts: [
@@ -153,7 +158,7 @@ function PureMultimodalInput({
     setAttachments,
     setLocalStorageInput,
     width,
-    chatId,
+    isLastMessageFromUser,
   ]);
 
   const uploadFile = async (file: File) => {
@@ -244,16 +249,6 @@ function PureMultimodalInput({
         )}
       </AnimatePresence>
 
-      {messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
-          <SuggestedActions
-            sendMessage={sendMessage}
-            chatId={chatId}
-            selectedVisibilityType={selectedVisibilityType}
-          />
-        )}
-
       <input
         type="file"
         className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
@@ -267,11 +262,7 @@ function PureMultimodalInput({
         className="rounded-xl border shadow-sm transition-all duration-200 bg-background border-border focus-within:border-border hover:border-muted-foreground/50"
         onSubmit={(event) => {
           event.preventDefault();
-          if (status !== 'ready') {
-            toast.error('Please wait for the model to finish its response!');
-          } else {
-            submitForm();
-          }
+          submitForm();
         }}
       >
         {(attachments.length > 0 || uploadQueue.length > 0) && (
@@ -317,21 +308,19 @@ function PureMultimodalInput({
           minHeight={44}
           maxHeight={200}
           disableAutoResize={true}
-          className="text-sm resize-none py-3 px-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-transparent !border-0 !border-none outline-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none placeholder:text-muted-foreground"
+          className="text-sm resize-none p-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-transparent !border-0 !border-none outline-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none placeholder:text-muted-foreground"
           rows={1}
           autoFocus
         />
         <PromptInputToolbar className="px-3 py-2 !border-t-0 !border-top-0 shadow-none dark:!border-transparent dark:border-0">
-          <PromptInputTools className="gap-2">
-            <AttachmentsButton fileInputRef={fileInputRef} status={status} />
-            <ModelSelectorCompact selectedModelId={selectedModelId} />
-          </PromptInputTools>
+          {/* Usunięto AttachmentsButton i ModelSelectorCompact */}
+          <PromptInputTools className="gap-2" />
           {status === 'submitted' ? (
             <StopButton stop={stop} setMessages={setMessages} />
           ) : (
             <PromptInputSubmit
               status={status}
-              disabled={!input.trim() || uploadQueue.length > 0}
+              disabled={!input.trim() || uploadQueue.length > 0 || isLastMessageFromUser}
               className="p-2 rounded-full transition-colors duration-200 text-primary-foreground bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground"
             >
               <ArrowUpIcon size={16} />
@@ -349,10 +338,8 @@ export const MultimodalInput = memo(
     if (prevProps.input !== nextProps.input) return false;
     if (prevProps.status !== nextProps.status) return false;
     if (!equal(prevProps.attachments, nextProps.attachments)) return false;
-    if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType)
-      return false;
     if (prevProps.selectedModelId !== nextProps.selectedModelId) return false;
-
+    if (prevProps.disableSuggestedActions !== nextProps.disableSuggestedActions) return false;
     return true;
   },
 );

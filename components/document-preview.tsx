@@ -11,7 +11,15 @@ import {
 import type { ArtifactKind, UIArtifact } from './artifact';
 import { FileIcon, FullscreenIcon, ImageIcon, LoaderIcon } from './icons';
 import { cn, fetcher } from '@/lib/utils';
-import type { Document } from '@/lib/db/schema';
+
+// Minimalny lokalny typ dokumentu (zgodny z użyciem w tym pliku)
+type Document = {
+  id: string;
+  title?: string;
+  content: string;
+  createdAt?: string | Date;
+  kind: ArtifactKind;
+};
 import { InlineDocumentSkeleton } from './document-skeleton';
 import useSWR from 'swr';
 import { Editor } from './text-editor';
@@ -93,7 +101,6 @@ export function DocumentPreview({
           content: artifact.content,
           id: artifact.documentId,
           createdAt: new Date(),
-          userId: 'noop',
         }
       : null;
 
@@ -107,11 +114,11 @@ export function DocumentPreview({
         setArtifact={setArtifact}
       />
       <DocumentHeader
-        title={document.title}
+        title={document.title ?? ''}
         kind={document.kind}
         isStreaming={artifact.status === 'streaming'}
       />
-      <DocumentContent document={document} />
+  <DocumentContent document={{ ...document, title: document.title ?? '' }} />
     </div>
   );
 }
@@ -208,9 +215,9 @@ const PureDocumentHeader = ({
   kind: ArtifactKind;
   isStreaming: boolean;
 }) => (
-  <div className="p-4 border rounded-t-2xl flex flex-row gap-2 items-start sm:items-center justify-between dark:bg-muted border-b-0 dark:border-zinc-700">
+  <div className="p-4 border border-blue-600 rounded-t-2xl flex flex-row gap-2 items-start sm:items-center justify-between bg-blue-50 border-b-0">
     <div className="flex flex-row items-start sm:items-center gap-3">
-      <div className="text-muted-foreground">
+      <div className="text-blue-600">
         {isStreaming ? (
           <div className="animate-spin">
             <LoaderIcon />
@@ -221,7 +228,7 @@ const PureDocumentHeader = ({
           <FileIcon />
         )}
       </div>
-      <div className="-translate-y-1 sm:translate-y-0 font-medium">{title}</div>
+      <div className="-translate-y-1 sm:translate-y-0 font-medium text-blue-700">{title}</div>
     </div>
     <div className="w-8" />
   </div>
@@ -272,7 +279,7 @@ const DocumentContent = ({ document }: { document: Document }) => {
         </div>
       ) : document.kind === 'image' ? (
         <ImageEditor
-          title={document.title}
+          title={document.title ?? ''}
           content={document.content ?? ''}
           isCurrentVersion={true}
           currentVersionIndex={0}

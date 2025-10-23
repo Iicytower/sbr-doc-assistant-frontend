@@ -1,5 +1,4 @@
 import { PreviewMessage, ThinkingMessage } from './message';
-import type { Vote } from '@/lib/db/schema';
 import { memo } from 'react';
 import equal from 'fast-deep-equal';
 import type { UIArtifact } from './artifact';
@@ -11,7 +10,7 @@ import type { ChatMessage } from '@/lib/types';
 interface ArtifactMessagesProps {
   chatId: string;
   status: UseChatHelpers<ChatMessage>['status'];
-  votes: Array<Vote> | undefined;
+  votes: undefined;
   messages: ChatMessage[];
   setMessages: UseChatHelpers<ChatMessage>['setMessages'];
   regenerate: UseChatHelpers<ChatMessage>['regenerate'];
@@ -50,11 +49,7 @@ function PureArtifactMessages({
           key={message.id}
           message={message}
           isLoading={status === 'streaming' && index === messages.length - 1}
-          vote={
-            votes
-              ? votes.find((vote) => vote.messageId === message.id)
-              : undefined
-          }
+          vote={undefined}
           setMessages={setMessages}
           regenerate={regenerate}
           isReadonly={isReadonly}

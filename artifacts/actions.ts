@@ -1,8 +1,9 @@
 'use server';
 
-import { getSuggestionsByDocumentId } from '@/lib/db/queries';
+
 
 export async function getSuggestions({ documentId }: { documentId: string }) {
-  const suggestions = await getSuggestionsByDocumentId({ documentId });
-  return suggestions ?? [];
+  // TODO: Implement suggestions fetching logic or connect to your backend here.
+  // Tymczasowa logika: zwracaj pustą tablicę
+  return [];
 }

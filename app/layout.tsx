@@ -1,14 +1,17 @@
+
 import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 
 import './globals.css';
-import { SessionProvider } from 'next-auth/react';
+
+import { SidebarVisibilityProvider } from '@/components/sidebar-visibility-context';
+import { SidebarFloatingToggles } from '@/components/sidebar-floating-toggles';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://chat.vercel.ai'),
-  title: 'Next.js Chatbot Template',
+  title: 'sbr-assistant',
   description: 'Next.js chatbot template using the AI SDK.',
 };
 
@@ -78,7 +81,10 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <Toaster position="top-center" />
-          <SessionProvider>{children}</SessionProvider>
+          <SidebarVisibilityProvider>
+            <SidebarFloatingToggles />
+            {children}
+          </SidebarVisibilityProvider>
         </ThemeProvider>
       </body>
     </html>

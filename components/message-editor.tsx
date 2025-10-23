@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 import { Textarea } from './ui/textarea';
-import { deleteTrailingMessages } from '@/app/(chat)/actions';
+import { deleteTrailingMessages } from '@/app/dashboard/actions';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import type { ChatMessage } from '@/lib/types';
 import { getTextFromMessage } from '@/lib/utils';
@@ -75,7 +75,7 @@ export function MessageEditor({
         <Button
           data-testid="message-editor-send-button"
           variant="default"
-          className="h-fit py-2 px-3"
+          className="h-fit py-2 px-3 bg-blue-600 text-white hover:bg-blue-700"
           disabled={isSubmitting}
           onClick={async () => {
             setIsSubmitting(true);

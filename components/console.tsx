@@ -96,16 +96,16 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
         )}
         style={{ height }}
       >
-        <div className="flex sticky top-0 z-50 flex-row justify-between items-center px-2 py-1 w-full border-b h-fit dark:border-zinc-700 border-zinc-200 bg-muted">
-          <div className="flex flex-row gap-3 items-center pl-2 text-sm dark:text-zinc-50 text-zinc-800">
-            <div className="text-muted-foreground">
+        <div className="flex sticky top-0 z-50 flex-row justify-between items-center px-2 py-1 w-full border-b h-fit border-blue-600 bg-blue-50">
+          <div className="flex flex-row gap-3 items-center pl-2 text-sm text-blue-700">
+            <div className="text-blue-600">
               <TerminalWindowIcon />
             </div>
             <div>Console</div>
           </div>
           <Button
             variant="ghost"
-            className="p-1 size-fit hover:dark:bg-zinc-700 hover:bg-zinc-200"
+            className="p-1 size-fit hover:bg-blue-100"
             size="icon"
             onClick={() => setConsoleOutputs([])}
           >

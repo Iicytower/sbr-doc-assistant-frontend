@@ -1,3 +1,9 @@
+// Minimalistyczny typ czatu zgodny z backendem
+export type Chat = {
+  id: string;
+  title: string;
+  createdAt: string | Date;
+};
 import { z } from 'zod';
 import type { getWeather } from './ai/tools/get-weather';
 import type { createDocument } from './ai/tools/create-document';
@@ -6,7 +12,11 @@ import type { requestSuggestions } from './ai/tools/request-suggestions';
 import type { InferUITool, UIMessage } from 'ai';
 
 import type { ArtifactKind } from '@/components/artifact';
-import type { Suggestion } from './db/schema';
+// Minimalny typ Suggestion (mock)
+export type Suggestion = {
+  id: string;
+  [key: string]: any;
+};
 
 export type DataPart = { type: 'append-message'; message: string };
 
@@ -19,9 +29,7 @@ export type MessageMetadata = z.infer<typeof messageMetadataSchema>;
 type weatherTool = InferUITool<typeof getWeather>;
 type createDocumentTool = InferUITool<ReturnType<typeof createDocument>>;
 type updateDocumentTool = InferUITool<ReturnType<typeof updateDocument>>;
-type requestSuggestionsTool = InferUITool<
-  ReturnType<typeof requestSuggestions>
->;
+type requestSuggestionsTool = InferUITool<ReturnType<typeof requestSuggestions>>;
 
 export type ChatTools = {
   getWeather: weatherTool;
